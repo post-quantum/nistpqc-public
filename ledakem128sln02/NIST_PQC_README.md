@@ -6,4 +6,3 @@ The version of SIKE p503 used here is from the [reference implementation](https:
 
 - Flatten directory structure, no `bin`, `include` or `library` directories
 - Replaced `Makefile`
-- Removed `rng.c`
