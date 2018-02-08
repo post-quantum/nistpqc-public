@@ -13,7 +13,7 @@ LIBNAME = nistpqc
 SHAREDLIBRARY = lib$(LIBNAME).so
 STATICLIBRARY = lib$(LIBNAME).a
 
-DIRS = newhope512cca kyber512 ntrulpr4591761 ntrukem443 sikep503
+DIRS = newhope512cca kyber512 ntrulpr4591761 ntrukem443 sikep503 ledakem128sln02
 
 OBJDIR = .obj
 

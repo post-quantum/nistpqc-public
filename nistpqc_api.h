@@ -12,7 +12,8 @@ typedef enum {
     NISTPQC_KYBER512,
     NISTPQC_NTRULPR4591761,
     NISTPQC_NTRUKEM443,
-    NISTPQC_SIKEP503
+    NISTPQC_SIKEP503,
+	NISTPQC_LEDAKEM128SLN02
 } nistpqc_cipher_t;
 
 struct nistpqc_t {

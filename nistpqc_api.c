@@ -51,6 +51,16 @@ extern size_t sikep503_crypto_get_public_key_size(void);
 extern size_t sikep503_crypto_get_private_key_size(void);
 extern const char* sikep503_crypto_get_algorithm_name(void);
 
+/* LEDAkem SL128 N0=2 */
+extern int ledakem128sln02_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
+extern int ledakem128sln02_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
+extern int ledakem128sln02_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
+extern size_t ledakem128sln02_crypto_get_shared_secret_size(void);
+extern size_t ledakem128sln02_crypto_get_ciphertext_size(void);
+extern size_t ledakem128sln02_crypto_get_public_key_size(void);
+extern size_t ledakem128sln02_crypto_get_private_key_size(void);
+extern const char* ledakem128sln02_crypto_get_algorithm_name(void);
+
 int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
 {
     switch (cipher)
@@ -104,6 +114,16 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->public_key_size = &sikep503_crypto_get_public_key_size;
             nistpqc->private_key_size = &sikep503_crypto_get_private_key_size;
             nistpqc->algorithm_name = &sikep503_crypto_get_algorithm_name;
+            break;
+         case NISTPQC_LEDAKEM128SLN02:
+            nistpqc->keypair = &ledakem128sln02_crypto_kem_keypair;    
+            nistpqc->enc = &ledakem128sln02_crypto_kem_enc;    
+            nistpqc->dec = &ledakem128sln02_crypto_kem_dec;
+            nistpqc->shared_secret_size = &ledakem128sln02_crypto_get_shared_secret_size;
+            nistpqc->ciphertext_size = &ledakem128sln02_crypto_get_ciphertext_size;
+            nistpqc->public_key_size = &ledakem128sln02_crypto_get_public_key_size;
+            nistpqc->private_key_size = &ledakem128sln02_crypto_get_private_key_size;
+            nistpqc->algorithm_name = &ledakem128sln02_crypto_get_algorithm_name;
             break;
         default:
             nistpqc->keypair = NULL;    

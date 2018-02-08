@@ -7,6 +7,7 @@
  *   - NTRU LPrime 4591^761
  *   - NTRU KEM 443
  *   - SIKE p503
+ *   - LEDAkem SL=128 N=02
  **/
 
 #include <stdio.h>
@@ -16,7 +17,7 @@
 #include "nistpqc_api.h"
 
 #define FIRST_PQC_CIPHER    NISTPQC_NEWHOPE512CCA
-#define LAST_PQC_CIPHER     NISTPQC_SIKEP503
+#define LAST_PQC_CIPHER     NISTPQC_LEDAKEM128SLN02
 #define TEST_RUN            100
 #define BENCHMARK_RUN       100
 #define PASSED              1
