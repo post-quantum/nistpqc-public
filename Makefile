@@ -1,7 +1,7 @@
 CC = gcc
 AR = ar
 INSTALL = install
-CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer
+CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer -march=native
 ARFLAGS = cr
 LDFLAGS = -shared
 
@@ -28,15 +28,15 @@ $(DIRS) : $(BUILDDIRS)
 $(BUILDDIRS) :
 	$(MAKE) -C $(@:build-%=%)
 
-$(SHAREDLIBRARY) : $(BUILDDIRS) $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c))
+$(SHAREDLIBRARY) : $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c))
 	$(CC) $(LDFLAGS) -Wl,-soname,$@ -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^)
 
 make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 
-$(STATICLIBRARY) : $(BUILDDIRS) $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c))
+$(STATICLIBRARY) : $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c))
 	echo $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
 
-$(OBJDIR)/%.o : %.c mkdir
+$(OBJDIR)/%.o : %.c | makedir
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 install: $(STATICLIBRARY) $(SHAREDLIBRARY) 
@@ -60,7 +60,7 @@ uninstall:
 test : $(TESTDIRS) all
 	$(MAKE) -C $(@:test-%=%) test
 
-mkdir :
+makedir :
 	@mkdir -p $(OBJDIR)
 
 clean : $(CLEANDIRS) clean-library clean-dir 

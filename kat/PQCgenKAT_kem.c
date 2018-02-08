@@ -12,15 +12,15 @@
 #include "rng.h"
 #include "nistpqc_api.h"
 
-#define	MAX_MARKER_LEN		50
+#define MAX_MARKER_LEN      50
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
 #define KAT_DATA_ERROR      -3
 #define KAT_CRYPTO_FAILURE  -4
 
-int		FindMarker(FILE *infile, const char *marker);
-int		ReadHex(FILE *infile, unsigned char *A, int Length, char *str);
-void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
+int     FindMarker(FILE *infile, const char *marker);
+int     ReadHex(FILE *infile, unsigned char *A, int Length, char *str);
+void    fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
 
 int
 main(int argc, char *argv[])
@@ -29,46 +29,46 @@ main(int argc, char *argv[])
     FILE                *fp_req, *fp_rsp;
     unsigned char       seed[48];
     unsigned char       entropy_input[48];
-	unsigned char       *ct, *ss, *ss1;
+    unsigned char       *ct, *ss, *ss1;
     //unsigned char       ct[CRYPTO_CIPHERTEXTBYTES], ss[CRYPTO_BYTES], ss1[CRYPTO_BYTES];
     int                 count;
     int                 done;
-	unsigned char       *pk, *sk;
+    unsigned char       *pk, *sk;
     //unsigned char       pk[CRYPTO_PUBLICKEYBYTES], sk[CRYPTO_SECRETKEYBYTES];
     int                 ret_val;
-	size_t              CRYPTO_CIPHERTEXTBYTES, CRYPTO_BYTES;
-	size_t              CRYPTO_PUBLICKEYBYTES, CRYPTO_SECRETKEYBYTES;
-	const char*         CRYPTO_ALGNAME;
-	nistpqc_t           nistpqc;
+    size_t              CRYPTO_CIPHERTEXTBYTES, CRYPTO_BYTES;
+    size_t              CRYPTO_PUBLICKEYBYTES, CRYPTO_SECRETKEYBYTES;
+    const char*         CRYPTO_ALGNAME;
+    nistpqc_t           nistpqc;
     
-	if (argc < 2) {
-		fprintf(stderr, "\nUsage: %s [Cipher Number]\n\n", argv[0]);
-		fprintf(stderr, "Cipher Number:\n");
-		fprintf(stderr, "  1. NewHope 512 CCA-KEM\n");
-		fprintf(stderr, "  2. Kyber 512\n");
-		fprintf(stderr, "  3. NTRU LPrime 4591^761\n");
-		fprintf(stderr, "  4. NTRU KEM 443\n");
-		fprintf(stderr, "\n");
-	
-		return -100;
-	}
+    if (argc < 2) {
+        fprintf(stderr, "\nUsage: %s [Cipher Number]\n\n", argv[0]);
+        fprintf(stderr, "Cipher Number:\n");
+        fprintf(stderr, "  1. NewHope 512 CCA-KEM\n");
+        fprintf(stderr, "  2. Kyber 512\n");
+        fprintf(stderr, "  3. NTRU LPrime 4591^761\n");
+        fprintf(stderr, "  4. NTRU KEM 443\n");
+        fprintf(stderr, "\n");
+    
+        return -100;
+    }
 
-	if (!nistpqc_init(&nistpqc, atoi(argv[1]))) {
-		fprintf(stderr, "Fatal error: unknown cipher number %d\n", atoi(argv[1]));
-		return -101;
-	}
+    if (!nistpqc_init(&nistpqc, atoi(argv[1]))) {
+        fprintf(stderr, "Fatal error: unknown cipher number %d\n", atoi(argv[1]));
+        return -101;
+    }
 
-	CRYPTO_CIPHERTEXTBYTES = nistpqc.ciphertext_size();
-	CRYPTO_BYTES = nistpqc.shared_secret_size();
-	CRYPTO_PUBLICKEYBYTES = nistpqc.public_key_size();
-	CRYPTO_SECRETKEYBYTES = nistpqc.private_key_size();
-	CRYPTO_ALGNAME = nistpqc.algorithm_name();
+    CRYPTO_CIPHERTEXTBYTES = nistpqc.ciphertext_size();
+    CRYPTO_BYTES = nistpqc.shared_secret_size();
+    CRYPTO_PUBLICKEYBYTES = nistpqc.public_key_size();
+    CRYPTO_SECRETKEYBYTES = nistpqc.private_key_size();
+    CRYPTO_ALGNAME = nistpqc.algorithm_name();
 
-	ct  = (unsigned char *)calloc(CRYPTO_CIPHERTEXTBYTES, sizeof(unsigned char));
-	ss  = (unsigned char *)calloc(CRYPTO_BYTES, sizeof(unsigned char));
-	ss1 = (unsigned char *)calloc(CRYPTO_BYTES, sizeof(unsigned char));
-	pk  = (unsigned char *)calloc(CRYPTO_PUBLICKEYBYTES, sizeof(unsigned char));
-	sk  = (unsigned char *)calloc(CRYPTO_SECRETKEYBYTES, sizeof(unsigned char));
+    ct  = (unsigned char *)calloc(CRYPTO_CIPHERTEXTBYTES, sizeof(unsigned char));
+    ss  = (unsigned char *)calloc(CRYPTO_BYTES, sizeof(unsigned char));
+    ss1 = (unsigned char *)calloc(CRYPTO_BYTES, sizeof(unsigned char));
+    pk  = (unsigned char *)calloc(CRYPTO_PUBLICKEYBYTES, sizeof(unsigned char));
+    sk  = (unsigned char *)calloc(CRYPTO_SECRETKEYBYTES, sizeof(unsigned char));
 
     // Create the REQUEST file
     sprintf(fn_req, "PQCkemKAT_%ld.req", CRYPTO_SECRETKEYBYTES);
@@ -168,38 +168,38 @@ main(int argc, char *argv[])
 int
 FindMarker(FILE *infile, const char *marker)
 {
-	char	line[MAX_MARKER_LEN];
-	int		i, len;
-	int curr_line;
+    char    line[MAX_MARKER_LEN];
+    int     i, len;
+    int curr_line;
 
-	len = (int)strlen(marker);
-	if ( len > MAX_MARKER_LEN-1 )
-		len = MAX_MARKER_LEN-1;
+    len = (int)strlen(marker);
+    if ( len > MAX_MARKER_LEN-1 )
+        len = MAX_MARKER_LEN-1;
 
-	for ( i=0; i<len; i++ )
-	  {
-	    curr_line = fgetc(infile);
-	    line[i] = curr_line;
-	    if (curr_line == EOF )
-	      return 0;
-	  }
-	line[len] = '\0';
+    for ( i=0; i<len; i++ )
+      {
+        curr_line = fgetc(infile);
+        line[i] = curr_line;
+        if (curr_line == EOF )
+          return 0;
+      }
+    line[len] = '\0';
 
-	while ( 1 ) {
-		if ( !strncmp(line, marker, len) )
-			return 1;
+    while ( 1 ) {
+        if ( !strncmp(line, marker, len) )
+            return 1;
 
-		for ( i=0; i<len-1; i++ )
-			line[i] = line[i+1];
-		curr_line = fgetc(infile);
-		line[len-1] = curr_line;
-		if (curr_line == EOF )
-		    return 0;
-		line[len] = '\0';
-	}
+        for ( i=0; i<len-1; i++ )
+            line[i] = line[i+1];
+        curr_line = fgetc(infile);
+        line[len-1] = curr_line;
+        if (curr_line == EOF )
+            return 0;
+        line[len] = '\0';
+    }
 
-	// shouldn't get here
-	return 0;
+    // shouldn't get here
+    return 0;
 }
 
 //
@@ -208,60 +208,60 @@ FindMarker(FILE *infile, const char *marker)
 int
 ReadHex(FILE *infile, unsigned char *A, int Length, char *str)
 {
-	int			i, ch, started;
-	unsigned char	ich;
+    int         i, ch, started;
+    unsigned char   ich;
 
-	if ( Length == 0 ) {
-		A[0] = 0x00;
-		return 1;
-	}
-	memset(A, 0x00, Length);
-	started = 0;
-	if ( FindMarker(infile, str) )
-		while ( (ch = fgetc(infile)) != EOF ) {
-			if ( !isxdigit(ch) ) {
-				if ( !started ) {
-					if ( ch == '\n' )
-						break;
-					else
-						continue;
-				}
-				else
-					break;
-			}
-			started = 1;
-			if ( (ch >= '0') && (ch <= '9') )
-				ich = ch - '0';
-			else if ( (ch >= 'A') && (ch <= 'F') )
-				ich = ch - 'A' + 10;
-			else if ( (ch >= 'a') && (ch <= 'f') )
-				ich = ch - 'a' + 10;
+    if ( Length == 0 ) {
+        A[0] = 0x00;
+        return 1;
+    }
+    memset(A, 0x00, Length);
+    started = 0;
+    if ( FindMarker(infile, str) )
+        while ( (ch = fgetc(infile)) != EOF ) {
+            if ( !isxdigit(ch) ) {
+                if ( !started ) {
+                    if ( ch == '\n' )
+                        break;
+                    else
+                        continue;
+                }
+                else
+                    break;
+            }
+            started = 1;
+            if ( (ch >= '0') && (ch <= '9') )
+                ich = ch - '0';
+            else if ( (ch >= 'A') && (ch <= 'F') )
+                ich = ch - 'A' + 10;
+            else if ( (ch >= 'a') && (ch <= 'f') )
+                ich = ch - 'a' + 10;
             else // shouldn't ever get here
                 ich = 0;
-			
-			for ( i=0; i<Length-1; i++ )
-				A[i] = (A[i] << 4) | (A[i+1] >> 4);
-			A[Length-1] = (A[Length-1] << 4) | ich;
-		}
-	else
-		return 0;
+            
+            for ( i=0; i<Length-1; i++ )
+                A[i] = (A[i] << 4) | (A[i+1] >> 4);
+            A[Length-1] = (A[Length-1] << 4) | ich;
+        }
+    else
+        return 0;
 
-	return 1;
+    return 1;
 }
 
 void
 fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L)
 {
-	unsigned long long  i;
+    unsigned long long  i;
 
-	fprintf(fp, "%s", S);
+    fprintf(fp, "%s", S);
 
-	for ( i=0; i<L; i++ )
-		fprintf(fp, "%02X", A[i]);
+    for ( i=0; i<L; i++ )
+        fprintf(fp, "%02X", A[i]);
 
-	if ( L == 0 )
-		fprintf(fp, "00");
+    if ( L == 0 )
+        fprintf(fp, "00");
 
-	fprintf(fp, "\n");
+    fprintf(fp, "\n");
 }
 
