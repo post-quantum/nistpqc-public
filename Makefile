@@ -16,6 +16,8 @@ STATICLIBRARY = lib$(LIBNAME).a
 DIRS = newhope512cca kyber512 ntrulpr4591761 ntrukem443 sikep503 ledakem128sln02
 
 OBJDIR = .obj
+ARCHIVES = $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) 
+OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c)) $(OBJDIR)/rng.o
 
 BUILDDIRS = $(DIRS:%=build-%)
 TESTDIRS  = $(DIRS:%=test-%)
@@ -28,15 +30,18 @@ $(DIRS) : $(BUILDDIRS)
 $(BUILDDIRS) :
 	$(MAKE) -C $(@:build-%=%)
 
-$(SHAREDLIBRARY) : $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c))
+$(SHAREDLIBRARY) : $(ARCHIVES) $(OBJECTS)
 	$(CC) $(LDFLAGS) -Wl,-soname,$@ -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^)
 
 make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 
-$(STATICLIBRARY) : $(foreach dir,$(DIRS),$(dir)/lib$(dir).a) $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c))
+$(STATICLIBRARY) : $(ARCHIVES) $(OBJECTS)
 	echo $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
 
 $(OBJDIR)/%.o : %.c | makedir
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJDIR)/rng.o : common/rng.c | makedir
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 install: $(STATICLIBRARY) $(SHAREDLIBRARY) 
@@ -47,8 +52,8 @@ install: $(STATICLIBRARY) $(SHAREDLIBRARY)
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(SHAREDLIBRARY) $(PREFIX)/lib/
 	@echo "Installing header files"
-	@$(INSTALL) -d $(PREFIX)/include
-	@$(INSTALL) -m 644 nistpqc_api.h $(PREFIX)/include/
+	@$(INSTALL) -d $(PREFIX)/include/nistpqc
+	@$(INSTALL) -m 644 nistpqc_api.h $(PREFIX)/include/nistpqc/api.h
 	@ldconfig $(PREFIX)
 
 uninstall:

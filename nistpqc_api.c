@@ -65,7 +65,7 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
 {
     switch (cipher)
     {
-        case NISTPQC_NEWHOPE512CCA:
+        case NISTPQC_CIPHER_NEWHOPE512CCA:
             nistpqc->keypair = &newhope512cca_crypto_kem_keypair;   
             nistpqc->enc = &newhope512cca_crypto_kem_enc;   
             nistpqc->dec = &newhope512cca_crypto_kem_dec;
@@ -75,7 +75,7 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->private_key_size = &newhope512cca_crypto_get_private_key_size;
             nistpqc->algorithm_name = &newhope512cca_crypto_get_algorithm_name;
             break;
-        case NISTPQC_KYBER512:
+        case NISTPQC_CIPHER_KYBER512:
             nistpqc->keypair = &kyber512_crypto_kem_keypair;    
             nistpqc->enc = &kyber512_crypto_kem_enc;    
             nistpqc->dec = &kyber512_crypto_kem_dec;
@@ -85,7 +85,7 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->private_key_size = &kyber512_crypto_get_private_key_size;
             nistpqc->algorithm_name = &kyber512_crypto_get_algorithm_name;
             break;
-        case NISTPQC_NTRULPR4591761:
+        case NISTPQC_CIPHER_NTRULPR4591761:
             nistpqc->keypair = &ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_keypair;   
             nistpqc->enc = &ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_enc;   
             nistpqc->dec = &ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_dec;
@@ -95,7 +95,7 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->private_key_size = &ntrulpr4591761_crypto_get_private_key_size;
             nistpqc->algorithm_name = &ntrulpr4591761_crypto_get_algorithm_name;
             break;
-        case NISTPQC_NTRUKEM443:
+        case NISTPQC_CIPHER_NTRUKEM443:
             nistpqc->keypair = &ntrukem443_crypto_kem_keypair;  
             nistpqc->enc = &ntrukem443_crypto_kem_enc;  
             nistpqc->dec = &ntrukem443_crypto_kem_dec;
@@ -105,7 +105,7 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->private_key_size = &ntrukem443_crypto_get_private_key_size;
             nistpqc->algorithm_name = &ntrukem443_crypto_get_algorithm_name;
             break;
-        case NISTPQC_SIKEP503:
+        case NISTPQC_CIPHER_SIKEP503:
             nistpqc->keypair = &sikep503_crypto_kem_keypair;    
             nistpqc->enc = &sikep503_crypto_kem_enc;    
             nistpqc->dec = &sikep503_crypto_kem_dec;
@@ -115,7 +115,7 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->private_key_size = &sikep503_crypto_get_private_key_size;
             nistpqc->algorithm_name = &sikep503_crypto_get_algorithm_name;
             break;
-         case NISTPQC_LEDAKEM128SLN02:
+         case NISTPQC_CIPHER_LEDAKEM128SLN02:
             nistpqc->keypair = &ledakem128sln02_crypto_kem_keypair;    
             nistpqc->enc = &ledakem128sln02_crypto_kem_enc;    
             nistpqc->dec = &ledakem128sln02_crypto_kem_dec;
