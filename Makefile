@@ -31,7 +31,7 @@ $(BUILDDIRS) :
 	$(MAKE) -C $(@:build-%=%)
 
 $(SHAREDLIBRARY) : $(ARCHIVES) $(OBJECTS)
-	$(CC) $(LDFLAGS) -Wl,-soname,$@ -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^)
+	$(CC) $(LDFLAGS) -Wl,-soname,$@ -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^) -lcrypto
 
 make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 
