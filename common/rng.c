@@ -5,18 +5,51 @@
  **/
 
 #include "rng.h"
-#include <openssl/rand.h>
-#include <openssl/err.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-int
-randombytes(unsigned char *x, unsigned long long xlen)
+#define RANDOM_DEVICE	"/dev/urandom"
+#define RANDOM_MAX_LEN	1048576
+
+int randombytes(unsigned char *x, unsigned long long xlen)
 {
-	int error_code = 0;
+	int size = 0;
+	unsigned char *x_ptr = x;
+	static int fd = -1;
+	
+	if (fd == -1)
+	{
+		while (1)
+		{
+			if (-1 != (fd = open(RANDOM_DEVICE, O_RDONLY)))
+				break;
+			sleep(1);
+		}
+	}
 
-	RAND_bytes(x, xlen);
+	while (xlen > 0)
+	{
+		if (xlen < RANDOM_MAX_LEN)
+		{
+			size = xlen;
+		}
+		else
+		{
+			size = RANDOM_MAX_LEN;
+		}
 
-	error_code = (int)ERR_get_error();
-	ERR_free_strings();
+		size = read(fd, x_ptr, size);
+		if (size < 1)
+		{
+			sleep(1);
+			continue;
+		}
 
-	return error_code;
+		x_ptr += size;
+		xlen -= size;
+	}
+
+	return 0;
 }
