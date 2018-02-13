@@ -5,7 +5,7 @@ ARFLAGS = cr
 APPENDPREFIX = ../scripts/append_prefix.sh
 DEFINE = -DCATEGORY=1 -DN0=2
 INCLUDE = -I. -I../common
-CFLAGS = -std=c99 -O3 -Wall -fPIC -fomit-frame-pointer -march=native $(DEFINE) $(INCLUDE)
+CFLAGS = -std=c99 -O3 -Wall -fPIC -fomit-frame-pointer $(DEFINE) $(INCLUDE)
 
 CIPHER = ledakem128sln02
 

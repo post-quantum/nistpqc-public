@@ -154,6 +154,11 @@ int nistpqc_kem_benchmark(nistpqc_cipher_t cipher)
     }
     fprintf(stdout, "%lu cycles\n", cycles/BENCHMARK_RUN);
 
+	free(ss); 
+	free(ct); 
+	free(sk); 
+	free(pk);
+
     return PASSED;
 }
 

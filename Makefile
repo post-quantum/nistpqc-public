@@ -1,8 +1,7 @@
 CC = gcc
 AR = ar
 INSTALL = install
-#CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer -march=native
-CFLAGS = -O0 -Wall -fPIC
+CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer
 ARFLAGS = cr
 LDFLAGS = -shared
 

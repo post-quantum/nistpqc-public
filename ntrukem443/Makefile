@@ -5,7 +5,7 @@ ARFLAGS = cr
 APPENDPREFIX = ../scripts/append_prefix.sh
 DEFINE = 
 INCLUDE = -I. -I../common
-CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer -march=native $(DEFINE) $(INCLUDE)
+CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer $(DEFINE) $(INCLUDE)
 
 CIPHER = ntrukem443
 
