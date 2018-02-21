@@ -53,3 +53,6 @@ dkms.conf
 
 # Specific files to be excluded
 test/nistpqc_test
+
+build/
+

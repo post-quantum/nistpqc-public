@@ -7,7 +7,7 @@ if [[ $# -ne 2 ]]; then
 	exit -1
 fi;
 
-symbols=($(nm --defined-only -f p $2 | cut -f1 -d' '))
+symbols=(`$NM --defined-only -f p $2 | cut -f1 -d' '`)
 for item in "${symbols[@]}"; do
-	objcopy --redefine-sym $item="$1$item" $2
+	$OBJCOPY --redefine-sym $item="$1$item" $2
 done
