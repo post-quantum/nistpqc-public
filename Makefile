@@ -2,8 +2,8 @@
 default:
 	@echo This makefile has no default target. Please run 'make android' or 'make native'.
 
-
 LIBNAME = nistpqc
+VERSION = 0.1
 
 # The cipher directories which will each be built separately and later combined
 DIRS = newhope512cca kyber512 ntrulpr4591761 ntrukem443 sikep503 ledakem128sln02
@@ -45,33 +45,60 @@ else
 	export NM=nm
 	export OBJCOPY=objcopy
 	export RANLIB=ranlib
+	LIBTOOL=libtool
+	UNAME := $(shell uname -s)
+ifeq ($(UNAME),Darwin)
+	  OPENSSL = /usr/local/opt/openssl
+	  OPENSSLLIBDIR = $(OPENSSL)/lib
+	  LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
+	  LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
+	  SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
+else ifeq ($(UNAME),Linux)
+	  LDFLAGS += -shared
+	  SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so.$(VERSION)
+	  SONAME = lib$(LIBNAME).so.$(shell echo $(VERSION) | cut -f1 -d'.')
+else
+		$(error Unsupported platform $(UNAME))
+endif
 endif
 
 
-	
 
 
-CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
+CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon -I/usr/local/opt/openssl/include
 
 OBJDIR = $(BUILDDIR)/.obj
-SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so
 STATICLIB = $(BUILDDIR)/lib$(LIBNAME).a
 
 android: $(TOOLCHAIN) $(STATICLIB)
 
 
-ARCHIVES = $(foreach dir,$(DIRS),$(BUILDDIR)/lib$(dir).a) 
+ARCHIVES = $(foreach dir,$(DIRS),$(BUILDDIR)/lib$(dir).a)
 OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c)) $(OBJDIR)/rng.o
 
 native : $(SHAREDLIB) $(STATICLIB)
 
 $(SHAREDLIB) : $(ARCHIVES) $(OBJECTS)
-	$(CC) -shared $(LDFLAGS) -Wl,-soname,$@ -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^) -lcrypto
+ifeq ($(UNAME),Darwin)
+		$(CC) $(LDFLAGS) -o $@ $(filter %.a,$^) $(filter %.o,$^) -L$(OPENSSLLIBDIR) -lcrypto
+else ifeq ($(UNAME),Linux)
+		$(CC) -shared $(LDFLAGS) -Wl,-soname,$(SONAME) -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^) -lcrypto
+else
+		@echo "Unsupported platform $(UNAME)"
+		@exit -1
+endif
 
-make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 
 $(STATICLIB) : $(ARCHIVES) $(OBJECTS)
+ifeq ($(UNAME),Darwin)
+	$(LIBTOOL) -static -o $@ $(filter %.a,$^) $(filter %.o,$^)
+else ifeq ($(UNAME),Linux)
+  make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 	echo $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
+else
+		@echo "Unsupported platform $(UNAME)"
+		@exit -1
+endif
 
 $(OBJDIR)/%.o : %.c | makedir
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -90,11 +117,15 @@ endif
 $(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES))
 
 $$($(1)_ARCHIVE) : $$($(1)_OBJS)
-	$(AR) cr $$@ $$^
-	$(RANLIB) $$@
-	bash ./scripts/append_prefix.sh $(1)_ $$@
+ifeq ($(UNAME),Linux)
+		$(AR) cr $$@ $$^
+		$(RANLIB) $$@
+else ifeq ($(UNAME),Darwin)
+		$(LIBTOOL) -static -o $$@ $$^
+endif
+		bash ./scripts/update_library.sh $(1) $$@
 
-$$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c 
+$$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
 	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -I$(1) -c -o $$@ $$<
 
@@ -117,11 +148,11 @@ ifeq ($(PREFIX),)
 endif
 
 
-install: $(STATICLIB) $(SHAREDLIB) 
+install: $(STATICLIB) $(SHAREDLIB)
 	@echo "Installing static library $(notdir $(STATICLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(STATICLIB) $(PREFIX)/lib/
-	@echo "Installing shared library $(notdir $(SHAREDLIB))"	
+	@echo "Installing shared library $(notdir $(SHAREDLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(SHAREDLIB) $(PREFIX)/lib/
 	@echo "Installing header files"
@@ -141,7 +172,7 @@ test : $(TESTDIRS) all
 makedir :
 	@mkdir -p $(OBJDIR)
 
-clean : 
+clean :
 	@rm -rf build
 
 
@@ -149,4 +180,3 @@ clean :
 .PHONY : subdirs $(DIRS)
 .PHONY : subdirs $(TESTDIRS)
 .PHONY : all test install uninstall clean
-
