@@ -1,6 +1,11 @@
+#
+# 'make' to build the native static library and shared library
+# 'make test' to build the test suite
+# 'make android' to build static library for Android apps
+#
 
-default:
-	@echo This makefile has no default target. Please run 'make android' or 'make native'.
+
+default: native
 
 LIBNAME = nistpqc
 VERSION = 0.1
@@ -137,8 +142,18 @@ $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
 
 
 
+TEST_EXE = $(BUILDDIR)/nistpqc_test
+ifeq ($(UNAME),Darwin)
+	TEST_LIBS = $(STATICLIB) -L$(OPENSSLLIBDIR) -lcrypto
+else
+	TEST_LIBS = $(STATICLIB) -lcrypto
+endif
 
-TESTDIRS  = $(DIRS:%=test-%)
+test: $(STATICLIB) test/nistpqc_test.c
+	$(CC) $(CFLAGS) $(INCLUDE) -I. -c -o $(OBJDIR)/nistpqc_test.o test/nistpqc_test.c
+	$(CC) -o $(TEST_EXE) $(OBJDIR)/nistpqc_test.o $(TEST_LIBS)
+
+
 
 
 INSTALL = install
@@ -152,22 +167,36 @@ install: $(STATICLIB) $(SHAREDLIB)
 	@echo "Installing static library $(notdir $(STATICLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(STATICLIB) $(PREFIX)/lib/
+ifeq ($(UNAME),Darwin)
+		@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).dylib
+else ifeq ($(UNAME),Linux)
+		@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/$(SONAME)
+		@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).so
+else
+		@echo "Unsupported platform $(UNAME)"
+		@exit -1
+endif
 	@echo "Installing shared library $(notdir $(SHAREDLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(SHAREDLIB) $(PREFIX)/lib/
 	@echo "Installing header files"
 	@$(INSTALL) -d $(PREFIX)/include/nistpqc
 	@$(INSTALL) -m 644 nistpqc_api.h $(PREFIX)/include/nistpqc/api.h
+ifeq ($(UNAME),Linux)
 	@ldconfig $(PREFIX)
+endif
 
 uninstall:
 	@echo "Uninstalling libraries and header files"
 	@rm -f $(PREFIX)/include/nistpqc_api.h
 	@rm -f $(PREFIX)/lib/$(notdir $(STATICLIB))
 	@rm -f $(PREFIX)/lib/$(notdir $(SHAREDLIB))
-
-test : $(TESTDIRS) all
-	$(MAKE) -C $(@:test-%=%) test
+ifeq ($(UNAME),Darwin)
+	@rm -f $(PREFIX)/lib/lib$(LIBNAME).dylib
+else ifeq ($(UNAME),Linux)
+	@rm -f $(PREFIX)/lib/$(SONAME)
+	@rm -f $(PREFIX)/lib/lib$(LIBNAME).so
+endif
 
 makedir :
 	@mkdir -p $(OBJDIR)
