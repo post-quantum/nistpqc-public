@@ -81,7 +81,7 @@ $(OBJDIR)/rng.o : common/rng.c | makedir
 
 
 # Function that generates the targets for one cipher subdirectory
-define build_archive =
+define build_archive
 $(1)_ARCHIVE=$(BUILDDIR)/lib$(1).a
 $(1)_OBJDIR=$(OBJDIR)/$(1)
 ifndef $(1)_SOURCES
