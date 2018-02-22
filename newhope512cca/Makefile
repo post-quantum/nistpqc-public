@@ -2,11 +2,13 @@ CC = gcc
 AR = ar
 RANLIB = ranlib
 ARFLAGS = cr
-APPENDPREFIX = ../scripts/append_prefix.sh
+LIBTOOL = libtool
+UPDATE_LIB = ../scripts/update_library.sh
 DEFINE = 
 INCLUDE = -I. -I../common
 CFLAGS = -O3 -Wall -fPIC -fomit-frame-pointer $(DEFINE) $(INCLUDE)
 
+UNAME := $(shell uname -s)
 CIPHER = newhope512cca
 
 TARGETLIB = lib$(CIPHER).a
@@ -18,15 +20,21 @@ OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(notdir $(SOURCES)))
 all : $(TARGETLIB)
 
 $(TARGETLIB) : $(OBJECTS)
+ifeq ($(UNAME),Linux)
 	$(AR) $(ARFLAGS) $@ $^
 	$(RANLIB) $@
-	bash $(APPENDPREFIX) $(CIPHER)_ $@
+else ifeq ($(UNAME),Darwin)
+	$(LIBTOOL) -static -o $@ $^
+else
+	@echo "Unsupported platform $(UNAME)"
+endif
+	bash $(UPDATE_LIB) $(CIPHER) $@
 
 $(OBJDIR)/%.o : %.c | makedir
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/aux_api.o : ../scripts/aux_api.c | makedir
-	$(CC) $(CFLAGS) $(INCLUDE) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 makedir :
 	@mkdir -p $(OBJDIR)

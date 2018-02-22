@@ -22,9 +22,9 @@ extern const char* kyber512_crypto_get_algorithm_name(void);
 
 /* NTRU LPrime 4591^761 */
 /* NTRU Prime naming is rather different */
-extern int ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_keypair(uint8_t *pk, uint8_t *sk);
-extern int ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
+extern int ntrulpr4591761_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
+extern int ntrulpr4591761_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
+extern int ntrulpr4591761_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
 extern size_t ntrulpr4591761_crypto_get_shared_secret_size(void);
 extern size_t ntrulpr4591761_crypto_get_ciphertext_size(void);
 extern size_t ntrulpr4591761_crypto_get_public_key_size(void);
@@ -86,9 +86,9 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             nistpqc->algorithm_name = &kyber512_crypto_get_algorithm_name;
             break;
         case NISTPQC_CIPHER_NTRULPR4591761:
-            nistpqc->keypair = &ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_keypair;   
-            nistpqc->enc = &ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_enc;   
-            nistpqc->dec = &ntrulpr4591761_crypto_kem_ntrulpr4591761_ref_dec;
+            nistpqc->keypair = &ntrulpr4591761_crypto_kem_keypair;   
+            nistpqc->enc = &ntrulpr4591761_crypto_kem_enc;   
+            nistpqc->dec = &ntrulpr4591761_crypto_kem_dec;
             nistpqc->shared_secret_size = &ntrulpr4591761_crypto_get_shared_secret_size;
             nistpqc->ciphertext_size = &ntrulpr4591761_crypto_get_ciphertext_size;
             nistpqc->public_key_size = &ntrulpr4591761_crypto_get_public_key_size;
