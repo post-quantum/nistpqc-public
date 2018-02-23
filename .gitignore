@@ -12,6 +12,9 @@
 *.map
 *.exp
 
+# We want to keep symbols.map
+!symbols.map
+
 # Precompiled Headers
 *.gch
 *.pch
