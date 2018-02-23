@@ -10,6 +10,10 @@ default: native
 LIBNAME = nistpqc
 VERSION = 0.1
 
+ifeq ($(PREFIX),)
+	PREFIX := /usr/local
+endif
+
 # The cipher directories which will each be built separately and later combined
 DIRS = newhope512cca kyber512 ntrulpr4591761 ntrukem443 sikep503 ledakem128sln02
 
@@ -57,6 +61,7 @@ ifeq ($(UNAME),Darwin)
 	OPENSSLLIBDIR = $(OPENSSL)/lib
 	LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
 	LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
+	LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
 	SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
 else ifeq ($(UNAME),Linux)
 	LDFLAGS += -shared
@@ -70,7 +75,10 @@ endif
 
 
 
-CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon -I/usr/local/opt/openssl/include
+CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
+ifeq ($(UNAME),Darwin)
+	CFLAGS += -I$(OPENSSL)/include
+endif
 
 OBJDIR = $(BUILDDIR)/.obj
 STATICLIB = $(BUILDDIR)/lib$(LIBNAME).a
@@ -93,14 +101,15 @@ else
 	@exit -1
 endif
 
-make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
-
-$(STATICLIB) : $(ARCHIVES) $(OBJECTS)
 ifeq ($(UNAME),Darwin)
+$(STATICLIB) : $(ARCHIVES) $(OBJECTS)
 	$(LIBTOOL) -static -o $@ $(filter %.a,$^) $(filter %.o,$^)
 else ifeq ($(UNAME),Linux)
+make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
+$(STATICLIB) : $(ARCHIVES) $(OBJECTS)
 	echo $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
 else
+$(STATICLIB) : $(ARCHIVES) $(OBJECTS)
 	@echo "Unsupported platform $(UNAME)"
 	@exit -1
 endif
@@ -134,12 +143,10 @@ $$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
 	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -I$(1) -c -o $$@ $$<
 
-
 endef
 
 # Generate targets for all the cipher subdirectories
 $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
-
 
 
 TEST_EXE = $(BUILDDIR)/nistpqc_test
@@ -155,12 +162,7 @@ test: $(STATICLIB) test/nistpqc_test.c
 
 
 
-
 INSTALL = install
-
-ifeq ($(PREFIX),)
-	PREFIX := /usr/local
-endif
 
 
 install: $(STATICLIB) $(SHAREDLIB)
