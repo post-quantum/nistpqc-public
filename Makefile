@@ -53,17 +53,17 @@ else
 	LIBTOOL=libtool
 	UNAME := $(shell uname -s)
 ifeq ($(UNAME),Darwin)
-	  OPENSSL = /usr/local/opt/openssl
-	  OPENSSLLIBDIR = $(OPENSSL)/lib
-	  LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
-	  LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
-	  SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
+	OPENSSL = /usr/local/opt/openssl
+	OPENSSLLIBDIR = $(OPENSSL)/lib
+	LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
+	LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
+	SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
 else ifeq ($(UNAME),Linux)
-	  LDFLAGS += -shared
-	  SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so.$(VERSION)
-	  SONAME = lib$(LIBNAME).so.$(shell echo $(VERSION) | cut -f1 -d'.')
+	LDFLAGS += -shared
+	SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so.$(VERSION)
+	SONAME = lib$(LIBNAME).so.$(shell echo $(VERSION) | cut -f1 -d'.')
 else
-		$(error Unsupported platform $(UNAME))
+	$(error Unsupported platform $(UNAME))
 endif
 endif
 
@@ -85,24 +85,24 @@ native : $(SHAREDLIB) $(STATICLIB)
 
 $(SHAREDLIB) : $(ARCHIVES) $(OBJECTS)
 ifeq ($(UNAME),Darwin)
-		$(CC) $(LDFLAGS) -o $@ $(filter %.a,$^) $(filter %.o,$^) -L$(OPENSSLLIBDIR) -lcrypto
+	$(CC) $(LDFLAGS) -o $@ $(filter %.a,$^) $(filter %.o,$^) -L$(OPENSSLLIBDIR) -lcrypto
 else ifeq ($(UNAME),Linux)
-		$(CC) -shared $(LDFLAGS) -Wl,-soname,$(SONAME) -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^) -lcrypto
+	$(CC) -shared $(LDFLAGS) -Wl,-soname,$(SONAME) -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^) -lcrypto
 else
-		@echo "Unsupported platform $(UNAME)"
-		@exit -1
+	@echo "Unsupported platform $(UNAME)"
+	@exit -1
 endif
 
+make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 
 $(STATICLIB) : $(ARCHIVES) $(OBJECTS)
 ifeq ($(UNAME),Darwin)
 	$(LIBTOOL) -static -o $@ $(filter %.a,$^) $(filter %.o,$^)
 else ifeq ($(UNAME),Linux)
-  make-archive = "create $(1)\n $(foreach lib,$(2),addlib $(lib)\n) $(foreach obj,$(3),addmod $(obj)\n) save\n end\n"
 	echo $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
 else
-		@echo "Unsupported platform $(UNAME)"
-		@exit -1
+	@echo "Unsupported platform $(UNAME)"
+	@exit -1
 endif
 
 $(OBJDIR)/%.o : %.c | makedir
@@ -123,12 +123,12 @@ $(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES))
 
 $$($(1)_ARCHIVE) : $$($(1)_OBJS)
 ifeq ($(UNAME),Linux)
-		$(AR) cr $$@ $$^
-		$(RANLIB) $$@
+	$(AR) cr $$@ $$^
+	$(RANLIB) $$@
 else ifeq ($(UNAME),Darwin)
-		$(LIBTOOL) -static -o $$@ $$^
+	$(LIBTOOL) -static -o $$@ $$^
 endif
-		bash ./scripts/update_library.sh $(1) $$@
+	bash ./scripts/update_library.sh $(1) $$@
 
 $$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
@@ -168,13 +168,13 @@ install: $(STATICLIB) $(SHAREDLIB)
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(STATICLIB) $(PREFIX)/lib/
 ifeq ($(UNAME),Darwin)
-		@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).dylib
+	@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
-		@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/$(SONAME)
-		@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).so
+	@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/$(SONAME)
+	@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).so
 else
-		@echo "Unsupported platform $(UNAME)"
-		@exit -1
+	@echo "Unsupported platform $(UNAME)"
+	@exit -1
 endif
 	@echo "Installing shared library $(notdir $(SHAREDLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
