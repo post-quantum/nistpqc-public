@@ -119,6 +119,8 @@ int nistpqc_kem_benchmark(nistpqc_cipher_t cipher)
     ss  = (uint8_t *)calloc(nistpqc.shared_secret_size(), sizeof(uint8_t));
 
     fprintf(stdout, "Benchmarking KEM cipher: %s\n", nistpqc.algorithm_name());
+	fprintf(stdout, "  Public-key size: %lu bytes\n", nistpqc.public_key_size());
+	fprintf(stdout, "  Ciphertext size: %lu bytes\n", nistpqc.ciphertext_size());
     fflush(stdout);
 
     cycles = 0ULL;
