@@ -1,132 +1,38 @@
 #include "nistpqc_api.h"
+#include "nistpqc_api_internal.h"
 
-/* NewHope 512 CCA-KEM */
-extern int newhope512cca_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
-extern int newhope512cca_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int newhope512cca_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
-extern size_t newhope512cca_crypto_get_shared_secret_size(void);
-extern size_t newhope512cca_crypto_get_ciphertext_size(void);
-extern size_t newhope512cca_crypto_get_public_key_size(void);
-extern size_t newhope512cca_crypto_get_private_key_size(void);
-extern const char* newhope512cca_crypto_get_algorithm_name(void);
 
-/* Kyber 512 */
-extern int kyber512_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
-extern int kyber512_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int kyber512_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
-extern size_t kyber512_crypto_get_shared_secret_size(void);
-extern size_t kyber512_crypto_get_ciphertext_size(void);
-extern size_t kyber512_crypto_get_public_key_size(void);
-extern size_t kyber512_crypto_get_private_key_size(void);
-extern const char* kyber512_crypto_get_algorithm_name(void);
-
-/* NTRU LPrime 4591^761 */
-/* NTRU Prime naming is rather different */
-extern int ntrulpr4591761_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
-extern int ntrulpr4591761_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int ntrulpr4591761_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
-extern size_t ntrulpr4591761_crypto_get_shared_secret_size(void);
-extern size_t ntrulpr4591761_crypto_get_ciphertext_size(void);
-extern size_t ntrulpr4591761_crypto_get_public_key_size(void);
-extern size_t ntrulpr4591761_crypto_get_private_key_size(void);
-extern const char* ntrulpr4591761_crypto_get_algorithm_name(void);
-
-/* NTRU KEM 443 */
-extern int ntrukem443_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
-extern int ntrukem443_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int ntrukem443_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
-extern size_t ntrukem443_crypto_get_shared_secret_size(void);
-extern size_t ntrukem443_crypto_get_ciphertext_size(void);
-extern size_t ntrukem443_crypto_get_public_key_size(void);
-extern size_t ntrukem443_crypto_get_private_key_size(void);
-extern const char* ntrukem443_crypto_get_algorithm_name(void);
-
-/* SIKEp503 */
-extern int sikep503_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
-extern int sikep503_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int sikep503_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
-extern size_t sikep503_crypto_get_shared_secret_size(void);
-extern size_t sikep503_crypto_get_ciphertext_size(void);
-extern size_t sikep503_crypto_get_public_key_size(void);
-extern size_t sikep503_crypto_get_private_key_size(void);
-extern const char* sikep503_crypto_get_algorithm_name(void);
-
-/* LEDAkem SL128 N0=2 */
-extern int ledakem128sln02_crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
-extern int ledakem128sln02_crypto_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
-extern int ledakem128sln02_crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
-extern size_t ledakem128sln02_crypto_get_shared_secret_size(void);
-extern size_t ledakem128sln02_crypto_get_ciphertext_size(void);
-extern size_t ledakem128sln02_crypto_get_public_key_size(void);
-extern size_t ledakem128sln02_crypto_get_private_key_size(void);
-extern const char* ledakem128sln02_crypto_get_algorithm_name(void);
+DECLARE_CIPHER_EXPORTS(newhope512cca)   /* NewHope 512 CCA-KEM */
+DECLARE_CIPHER_EXPORTS(kyber512)        /* Kyber 512 */
+DECLARE_CIPHER_EXPORTS(ntrulpr4591761)  /* NTRU LPrime 4591^761 */
+DECLARE_CIPHER_EXPORTS(ntrukem443)      /* NTRU KEM 443 */
+DECLARE_CIPHER_EXPORTS(sikep503)        /* SIKEp503 */
+DECLARE_CIPHER_EXPORTS(ledakem128sln02) /* LEDAkem SL128 N0=2 */
 
 int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
 {
     switch (cipher)
     {
         case NISTPQC_CIPHER_NEWHOPE512CCA:
-            nistpqc->keypair = &newhope512cca_crypto_kem_keypair;   
-            nistpqc->enc = &newhope512cca_crypto_kem_enc;   
-            nistpqc->dec = &newhope512cca_crypto_kem_dec;
-            nistpqc->shared_secret_size = &newhope512cca_crypto_get_shared_secret_size;
-            nistpqc->ciphertext_size = &newhope512cca_crypto_get_ciphertext_size;
-            nistpqc->public_key_size = &newhope512cca_crypto_get_public_key_size;
-            nistpqc->private_key_size = &newhope512cca_crypto_get_private_key_size;
-            nistpqc->algorithm_name = &newhope512cca_crypto_get_algorithm_name;
+            INIT_CIPHER_INTERFACE(newhope512cca);
             break;
         case NISTPQC_CIPHER_KYBER512:
-            nistpqc->keypair = &kyber512_crypto_kem_keypair;    
-            nistpqc->enc = &kyber512_crypto_kem_enc;    
-            nistpqc->dec = &kyber512_crypto_kem_dec;
-            nistpqc->shared_secret_size = &kyber512_crypto_get_shared_secret_size;
-            nistpqc->ciphertext_size = &kyber512_crypto_get_ciphertext_size;
-            nistpqc->public_key_size = &kyber512_crypto_get_public_key_size;
-            nistpqc->private_key_size = &kyber512_crypto_get_private_key_size;
-            nistpqc->algorithm_name = &kyber512_crypto_get_algorithm_name;
+            INIT_CIPHER_INTERFACE(kyber512);
             break;
         case NISTPQC_CIPHER_NTRULPR4591761:
-            nistpqc->keypair = &ntrulpr4591761_crypto_kem_keypair;   
-            nistpqc->enc = &ntrulpr4591761_crypto_kem_enc;   
-            nistpqc->dec = &ntrulpr4591761_crypto_kem_dec;
-            nistpqc->shared_secret_size = &ntrulpr4591761_crypto_get_shared_secret_size;
-            nistpqc->ciphertext_size = &ntrulpr4591761_crypto_get_ciphertext_size;
-            nistpqc->public_key_size = &ntrulpr4591761_crypto_get_public_key_size;
-            nistpqc->private_key_size = &ntrulpr4591761_crypto_get_private_key_size;
-            nistpqc->algorithm_name = &ntrulpr4591761_crypto_get_algorithm_name;
+            INIT_CIPHER_INTERFACE(ntrulpr4591761);
             break;
         case NISTPQC_CIPHER_NTRUKEM443:
-            nistpqc->keypair = &ntrukem443_crypto_kem_keypair;  
-            nistpqc->enc = &ntrukem443_crypto_kem_enc;  
-            nistpqc->dec = &ntrukem443_crypto_kem_dec;
-            nistpqc->shared_secret_size = &ntrukem443_crypto_get_shared_secret_size;
-            nistpqc->ciphertext_size = &ntrukem443_crypto_get_ciphertext_size;
-            nistpqc->public_key_size = &ntrukem443_crypto_get_public_key_size;
-            nistpqc->private_key_size = &ntrukem443_crypto_get_private_key_size;
-            nistpqc->algorithm_name = &ntrukem443_crypto_get_algorithm_name;
+            INIT_CIPHER_INTERFACE(ntrukem443);
             break;
         case NISTPQC_CIPHER_SIKEP503:
-            nistpqc->keypair = &sikep503_crypto_kem_keypair;    
-            nistpqc->enc = &sikep503_crypto_kem_enc;    
-            nistpqc->dec = &sikep503_crypto_kem_dec;
-            nistpqc->shared_secret_size = &sikep503_crypto_get_shared_secret_size;
-            nistpqc->ciphertext_size = &sikep503_crypto_get_ciphertext_size;
-            nistpqc->public_key_size = &sikep503_crypto_get_public_key_size;
-            nistpqc->private_key_size = &sikep503_crypto_get_private_key_size;
-            nistpqc->algorithm_name = &sikep503_crypto_get_algorithm_name;
+            INIT_CIPHER_INTERFACE(sikep503);
             break;
          case NISTPQC_CIPHER_LEDAKEM128SLN02:
-            nistpqc->keypair = &ledakem128sln02_crypto_kem_keypair;    
-            nistpqc->enc = &ledakem128sln02_crypto_kem_enc;    
-            nistpqc->dec = &ledakem128sln02_crypto_kem_dec;
-            nistpqc->shared_secret_size = &ledakem128sln02_crypto_get_shared_secret_size;
-            nistpqc->ciphertext_size = &ledakem128sln02_crypto_get_ciphertext_size;
-            nistpqc->public_key_size = &ledakem128sln02_crypto_get_public_key_size;
-            nistpqc->private_key_size = &ledakem128sln02_crypto_get_private_key_size;
-            nistpqc->algorithm_name = &ledakem128sln02_crypto_get_algorithm_name;
+            INIT_CIPHER_INTERFACE(ledakem128sln02);
             break;
         default:
-            nistpqc->keypair = NULL;    
+            nistpqc->keypair = NULL;
             nistpqc->enc = NULL;
             nistpqc->dec = NULL;
             nistpqc->shared_secret_size = NULL;
@@ -139,4 +45,3 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
 
     return 1;
 }
-
