@@ -22,6 +22,8 @@ sikep503_SOURCES = sikep503/P503.c sikep503/generic/fp_generic.c sikep503/sha3/f
 sikep503_DEFINES = -D _OPTIMIZED_GENERIC_ -D _AMD64_ -D __LINUX__
 ledakem128sln02_DEFINES = -DCATEGORY=1 -DN0=2
 
+UNAME := $(shell uname -s)
+
 # If building for Android then we use a special 'standalone' toolchain rather than the system one for
 # native builds. The Android NDK will build this toolchain for us
 ifeq ($(MAKECMDGOALS),android)
@@ -55,7 +57,6 @@ else
 	export OBJCOPY=objcopy
 	export RANLIB=ranlib
 	LIBTOOL=libtool
-	UNAME := $(shell uname -s)
 ifeq ($(UNAME),Darwin)
 	OPENSSL = /usr/local/opt/openssl
 	OPENSSLLIBDIR = $(OPENSSL)/lib
