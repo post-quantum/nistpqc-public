@@ -2,6 +2,7 @@
 # 'make' to build the native static library and shared library
 # 'make test' to build the test suite
 # 'make android' to build static library for Android apps
+# 'make engine' to build the OpenSSL engine
 #
 
 
@@ -18,7 +19,7 @@ endif
 DIRS = newhope512cca kyber512 ntrulpr4591761 ntrukem443 sikep503 ledakem128sln02
 
 # Some cipher-specific options
-sikep503_SOURCES = sikep503/P503.c sikep503/generic/fp_generic.c sikep503/sha3/fips202.c scripts/aux_api.c
+sikep503_SOURCES = crypto/sikep503/P503.c crypto/sikep503/generic/fp_generic.c crypto/sikep503/sha3/fips202.c scripts/aux_api.c
 sikep503_DEFINES = -D _OPTIMIZED_GENERIC_ -D _AMD64_ -D __LINUX__
 ledakem128sln02_DEFINES = -DCATEGORY=1 -DN0=2
 
@@ -127,7 +128,7 @@ define build_archive
 $(1)_ARCHIVE=$(BUILDDIR)/lib$(1).a
 $(1)_OBJDIR=$(OBJDIR)/$(1)
 ifndef $(1)_SOURCES
-$(1)_SOURCES=$(wildcard $(1)/*.c) scripts/aux_api.c
+$(1)_SOURCES=$(wildcard crypto/$(1)/*.c) scripts/aux_api.c
 endif
 $(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES))
 
@@ -138,16 +139,29 @@ ifeq ($(UNAME),Linux)
 else ifeq ($(UNAME),Darwin)
 	$(LIBTOOL) -static -o $$@ $$^
 endif
-	bash ./scripts/update_library.sh $(1) $$@
+	bash ./scripts/update_library.sh crypto/$(1) $$@
 
 $$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
-	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -I$(1) -c -o $$@ $$<
+	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -Icrypto/$(1) -c -o $$@ $$<
 
 endef
 
 # Generate targets for all the cipher subdirectories
 $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
+
+# OpenSSL engine dynamic lib
+ENGINELIB:=$(BUILDDIR)/libnistpqc_engine.A.dylib
+ENGINE_OBJ:=$(BUILDDIR)/openssl_engine/nistpqc_engine.o
+ENGINE_SRC:=openssl_engine/nistpqc_engine.c
+$(ENGINE_OBJ): $(ENGINE_SRC)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDE) -I. -c -o $(ENGINE_OBJ) $(ENGINE_SRC)
+$(ENGINELIB): $(STATICLIB) $(ENGINE_OBJ)
+	$(CC) -shared -dynamiclib -o $@ $(filter %.a,$^) $(filter %.o,$^) -L$(OPENSSLLIBDIR) -lcrypto
+engine:  $(ENGINELIB)
+
+
 
 
 TEST_EXE = $(BUILDDIR)/nistpqc_test
@@ -170,6 +184,7 @@ install: $(STATICLIB) $(SHAREDLIB)
 	@echo "Installing static library $(notdir $(STATICLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(STATICLIB) $(PREFIX)/lib/
+	@$(INSTALL) -m 755 $(ENGINELIB) $(PREFIX)/lib/engines-1.1/nistpqc.dylib
 ifeq ($(UNAME),Darwin)
 	@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
@@ -194,6 +209,7 @@ uninstall:
 	@rm -f $(PREFIX)/include/nistpqc_api.h
 	@rm -f $(PREFIX)/lib/$(notdir $(STATICLIB))
 	@rm -f $(PREFIX)/lib/$(notdir $(SHAREDLIB))
+	@rm -f $(PREFIX)/lib/engines-1.1/nistpqc.dylib
 ifeq ($(UNAME),Darwin)
 	@rm -f $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
