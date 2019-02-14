@@ -59,7 +59,7 @@ else
 	export RANLIB=ranlib
 	LIBTOOL=libtool
 ifeq ($(UNAME),Darwin)
-	OPENSSL = /usr/local/opt/openssl
+	OPENSSL = /usr/local
 	OPENSSLLIBDIR = $(OPENSSL)/lib
 	LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
 	LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
@@ -77,7 +77,8 @@ endif
 
 
 
-CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
+#CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
+CFLAGS += -O0 -g -Wall -fPIC -Icommon
 ifeq ($(UNAME),Darwin)
 	CFLAGS += -I$(OPENSSL)/include
 endif
