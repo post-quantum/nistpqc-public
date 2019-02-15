@@ -43,5 +43,6 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             return 0;   /* Unknown cipher, return FALSE */
     }
 
+    nistpqc->cipher_id = cipher;
     return 1;
 }

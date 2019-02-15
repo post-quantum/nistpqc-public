@@ -152,15 +152,16 @@ endef
 $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
 
 # OpenSSL engine dynamic lib
-ENGINELIB:=$(BUILDDIR)/libnistpqc_engine.A.dylib
-ENGINE_OBJ:=$(BUILDDIR)/openssl_engine/nistpqc_engine.o
-ENGINE_SRC:=openssl_engine/nistpqc_engine.c
+ENGINE_LIB:=$(BUILDDIR)/libnistpqc_engine.A.dylib
+ENGINE_OBJ:=$(BUILDDIR)/openssl/nistpqc_engine.o
+ENGINE_SRC:=openssl/nistpqc_engine.c
+ENGINE_INSTALL_PATH:=$(PREFIX)/lib/engines-1.1/nistpqc.dylib
 $(ENGINE_OBJ): $(ENGINE_SRC)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDE) -I. -c -o $(ENGINE_OBJ) $(ENGINE_SRC)
-$(ENGINELIB): $(STATICLIB) $(ENGINE_OBJ)
+$(ENGINE_LIB): $(STATICLIB) $(ENGINE_OBJ)
 	$(CC) -shared -dynamiclib -o $@ $(filter %.a,$^) $(filter %.o,$^) -L$(OPENSSLLIBDIR) -lcrypto
-engine:  $(ENGINELIB)
+engine:  $(ENGINE_LIB)
 
 
 
@@ -185,7 +186,8 @@ install: $(STATICLIB) $(SHAREDLIB)
 	@echo "Installing static library $(notdir $(STATICLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(STATICLIB) $(PREFIX)/lib/
-	@$(INSTALL) -m 755 $(ENGINELIB) $(PREFIX)/lib/engines-1.1/nistpqc.dylib
+	@echo "Installing OpenSSL engine to $(ENGINE_INSTALL_PATH)"
+	@$(INSTALL) -m 755 $(ENGINE_LIB) $(ENGINE_INSTALL_PATH)
 ifeq ($(UNAME),Darwin)
 	@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
@@ -210,7 +212,7 @@ uninstall:
 	@rm -f $(PREFIX)/include/nistpqc_api.h
 	@rm -f $(PREFIX)/lib/$(notdir $(STATICLIB))
 	@rm -f $(PREFIX)/lib/$(notdir $(SHAREDLIB))
-	@rm -f $(PREFIX)/lib/engines-1.1/nistpqc.dylib
+	@rm -f $(ENGINE_INSTALL_PATH)
 ifeq ($(UNAME),Darwin)
 	@rm -f $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
