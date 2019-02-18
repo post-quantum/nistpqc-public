@@ -27,7 +27,6 @@ static const int meth_nids[] = {
 
 // Key data struct. An EVP_PKEY holds a pointer to one of these.
 typedef struct {
-    int is_server;
     size_t pk_size;
     size_t sk_size;
     uint8_t* pubkey;
@@ -122,9 +121,8 @@ static int pkey_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
 
     EVP_PKEY* peerKey = EVP_PKEY_CTX_get0_pkey(ctx);
 
-    // If the peer key doesn't exist, this is the client side and we must generate a keypair
-    if (!peerKey) {
-        keyinfo->is_server = 0;
+    // Client KEM: generate a keypair
+    if (!EVP_PKEY_CTX_get_server(ctx)) {
 
         // Allocations to hold the keypair
         keyinfo->pk_size = cipher->public_key_size();
@@ -138,10 +136,8 @@ static int pkey_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
             return 0;
         }
 
+    // Server KEM: Generate the shared secret and pretend its our private key
     } else {
-        keyinfo->is_server = 1;
-
-        // Server-side KEM. First we generate the shared secret and pretend its our private key
         size_t shared_secret_size = cipher->shared_secret_size();
         unsigned char* shared_secret = OPENSSL_secure_malloc(shared_secret_size);
         RAND_bytes(shared_secret, shared_secret_size);
@@ -174,7 +170,7 @@ static int pkey_derive(EVP_PKEY_CTX *ctx, unsigned char *key,size_t *keylen) {
     nistpqc_keyinfo_t* keyinfo = (nistpqc_keyinfo_t*)EVP_PKEY_get0(pkey);
 
     // Server: no derivation needed, the shared secret is our private key data
-    if (keyinfo->is_server) {
+    if (EVP_PKEY_CTX_get_server(ctx)) {
         *keylen = keyinfo->sk_size;
         if (key) {
             memcpy(key, keyinfo->privkey, keyinfo->sk_size);
@@ -193,9 +189,9 @@ static int pkey_derive(EVP_PKEY_CTX *ctx, unsigned char *key,size_t *keylen) {
     }
 
     // DEBUG ONLY!
-    if (key) {
-        printf("*** SECRET! %02X%02X%02X%02X%02X%02X%02X%02X...\n", key[0], key[1], key[2], key[3], key[4], key[5], key[6], key[7]);
-    }
+    //if (key) {
+    //    printf("*** SECRET! %02X%02X%02X%02X%02X%02X%02X%02X...\n", key[0], key[1], key[2], key[3], key[4], key[5], key[6], key[7]);
+    //}
     return *keylen;
 }
 
