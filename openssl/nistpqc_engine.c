@@ -188,10 +188,6 @@ static int pkey_derive(EVP_PKEY_CTX *ctx, unsigned char *key,size_t *keylen) {
         }
     }
 
-    // DEBUG ONLY!
-    //if (key) {
-    //    printf("*** SECRET! %02X%02X%02X%02X%02X%02X%02X%02X...\n", key[0], key[1], key[2], key[3], key[4], key[5], key[6], key[7]);
-    //}
     return *keylen;
 }
 
@@ -281,7 +277,6 @@ static void pkey_free(EVP_PKEY* pkey) {
              OPENSSL_free(keyinfo->pubkey);
          }
         OPENSSL_free(keyinfo);
-        EVP_PKEY_assign(pkey, EVP_PKEY_id(pkey), NULL);
      }
 }
 
