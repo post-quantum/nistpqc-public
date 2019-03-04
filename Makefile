@@ -59,8 +59,6 @@ else
 	export RANLIB=ranlib
 	LIBTOOL=libtool
 ifeq ($(UNAME),Darwin)
-	OPENSSL = /usr/local
-	OPENSSLLIBDIR = $(OPENSSL)/lib
 	LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
 	LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
 	LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
@@ -80,7 +78,7 @@ endif
 #CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 CFLAGS += -O0 -g -Wall -fPIC -Icommon
 ifeq ($(UNAME),Darwin)
-	CFLAGS += -I$(OPENSSL)/include
+	CFLAGS += -I$(PREFIX)/include
 endif
 
 OBJDIR = $(BUILDDIR)/.obj
@@ -140,7 +138,7 @@ ifeq ($(UNAME),Linux)
 else ifeq ($(UNAME),Darwin)
 	$(LIBTOOL) -static -o $$@ $$^
 endif
-	bash ./scripts/update_library.sh crypto/$(1) $$@
+	cd crypto && bash ../scripts/update_library.sh $(1) ../$$@ && cd ..
 
 $$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
@@ -152,15 +150,17 @@ endef
 $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
 
 # OpenSSL engine dynamic lib
-ENGINE_LIB:=$(BUILDDIR)/libnistpqc_engine.A.dylib
+#ENGINE_EXT:=dylib
+ENGINE_EXT:=so
+ENGINE_LIB:=$(BUILDDIR)/libnistpqc_engine.$(ENGINE_EXT)
 ENGINE_OBJ:=$(BUILDDIR)/openssl/nistpqc_engine.o
 ENGINE_SRC:=openssl/nistpqc_engine.c
-ENGINE_INSTALL_PATH:=$(PREFIX)/lib/engines-1.1/nistpqc.dylib
+ENGINE_INSTALL_PATH:=$(PREFIX)/lib/engines-1.1/nistpqc.$(ENGINE_EXT)
 $(ENGINE_OBJ): $(ENGINE_SRC)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INCLUDE) -I. -c -o $(ENGINE_OBJ) $(ENGINE_SRC)
 $(ENGINE_LIB): $(STATICLIB) $(ENGINE_OBJ)
-	$(CC) -shared -dynamiclib -o $@ $(filter %.a,$^) $(filter %.o,$^) -L$(OPENSSLLIBDIR) -lcrypto
+	$(CC) -shared -o $@ -Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^) -L$(PREFIX)/lib -lcrypto -ldl 
 engine:  $(ENGINE_LIB)
 
 
@@ -168,7 +168,7 @@ engine:  $(ENGINE_LIB)
 
 TEST_EXE = $(BUILDDIR)/nistpqc_test
 ifeq ($(UNAME),Darwin)
-	TEST_LIBS = $(STATICLIB) -L$(OPENSSLLIBDIR) -lcrypto
+	TEST_LIBS = $(STATICLIB) -L$(PREFIX)/lib -lcrypto
 else
 	TEST_LIBS = $(STATICLIB) -lcrypto
 endif
