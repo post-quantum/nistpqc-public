@@ -207,6 +207,23 @@ static int pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth, const int **nids, int 
     return 1;
 }
 
+static int print_key(BIO *out, const EVP_PKEY *pkey, int public) {
+    nistpqc_keyinfo_t* keyinfo =  EVP_PKEY_get0(pkey);
+    if (!keyinfo) {
+        return 0;
+    }
+    uint8_t* keydata = public ? keyinfo->pubkey : keyinfo->privkey;
+    size_t cb = public ? keyinfo->pk_size : keyinfo->sk_size;
+    if (!keydata || !cb) {
+        return 0;
+    }
+    BIO_printf(out, public ? "Public key:" : "Private key:");
+    for (int i=0 ; i<cb ; i++) {
+        BIO_printf(out, "%02X", keydata[i]);
+    }
+    return 1;
+}
+
 static int pkey_asn_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2) {
     nistpqc_keyinfo_t* keyinfo = EVP_PKEY_get0(pkey);
     if (op == ASN1_PKEY_CTRL_GET1_TLS_ENCPT) {
@@ -240,16 +257,17 @@ static int pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b) {
     return 0;
 }
 static int pub_print(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx) {
-    printf("todo: nistpqc_pub_print\n");
-    return 0;
+    return print_key(out, pkey, 1);
 }
-static int pkey_size(const EVP_PKEY *pk) {
-    printf("todo: nistpqc_pkey_size\n");
-    return 0;
+static int pkey_size(const EVP_PKEY *pkey) {
+    nistpqc_keyinfo_t* keyinfo = EVP_PKEY_get0(pkey);
+    if (!keyinfo) {
+        return 0;
+    }
+    return keyinfo->pk_size;
 }
-static int pkey_bits(const EVP_PKEY *pk) {
-    printf("todo: nistpqc_pkey_bits\n");
-    return 0;
+static int pkey_bits(const EVP_PKEY *pkey) {
+    return pkey_size(pkey) * 8;
 }
 static int priv_decode(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf) {
     printf("todo: nistpqc_priv_decode\n");
@@ -260,8 +278,7 @@ static int priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk) {
     return 0;
 }
 static int priv_print(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx) {
-    printf("todo: nistpqc_priv_print\n");
-    return 0;
+    return print_key(out, pkey, 0);
 }
 static int pkey_security_bits(const EVP_PKEY *pk) {
     printf("todo: nistpqc_pkey_security_bits\n");
@@ -286,7 +303,7 @@ static int pkey_asn1_meths(ENGINE *e, EVP_PKEY_ASN1_METHOD **ameth, const int **
         return sizeof(meth_nids) / sizeof(meth_nids[0]) - 1;
     }
 
-    *ameth = EVP_PKEY_asn1_new(nid, 0, "kyber512", "NIST PQC Kyber512");
+    *ameth = EVP_PKEY_asn1_new(nid, 0, "nistpqc", "NIST PQC Algorithm");
     EVP_PKEY_asn1_set_public(*ameth, pub_decode, 
                                     pub_encode, 
                                     pub_cmp,
