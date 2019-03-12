@@ -22,16 +22,16 @@ int crypto_stream_aes256ctr_xor(
   const unsigned char *k
 )
 {
-  EVP_CIPHER_CTX x;
+  EVP_CIPHER_CTX* x;
   int ok;
   int outl = 0;
 
-  EVP_CIPHER_CTX_init(&x);
-  ok = EVP_EncryptInit_ex(&x,EVP_aes_256_ctr(),0,k,n);
-  if (ok == 1) ok = EVP_CIPHER_CTX_set_padding(&x, 0);
-  if (ok == 1) ok = EVP_EncryptUpdate(&x, out, &outl, in, inlen);
-  if (ok == 1) ok = EVP_EncryptFinal_ex(&x, out, &outl);
+  x = EVP_CIPHER_CTX_new();
+  ok = EVP_EncryptInit_ex(x,EVP_aes_256_ctr(),0,k,n);
+  if (ok == 1) ok = EVP_CIPHER_CTX_set_padding(x, 0);
+  if (ok == 1) ok = EVP_EncryptUpdate(x, out, &outl, in, inlen);
+  if (ok == 1) ok = EVP_EncryptFinal_ex(x, out, &outl);
 
-  EVP_CIPHER_CTX_cleanup(&x);
+  EVP_CIPHER_CTX_free(x);
   return ok == 1 ? 0 : -111;
 }

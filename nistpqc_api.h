@@ -17,6 +17,8 @@ typedef enum {
 } nistpqc_cipher_t;
 
 struct nistpqc_t {
+    nistpqc_cipher_t cipher_id;
+
     /**
      * Function pointer for key-pair generation
      *
@@ -63,7 +65,7 @@ struct nistpqc_t {
      *
      * @param ss  Pointer to the output shared-secret buffer
      * @param ct  Pointer to the input ciphertext buffer
-     * @param sk  Pointer to the input public-key buffer
+     * @param sk  Pointer to the input private-key buffer
      * @return 0 on success, non-zero otherwise
      **/
     int    (*dec)(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
