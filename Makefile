@@ -1,13 +1,12 @@
 #
 # 'make' to build the native static library, shared library, and OpenSSL engine
 # 'make native' to build just the static and shared libs
-# 'make engine' to build just the OpenSSL engine
 # 'make test' to build the test suite
 # 'make android' to build static library for Android apps
 # 'sudo make install' to install everything you built.
 
 
-default: native engine
+default: native
 
 LIBNAME = nistpqc
 VERSION = 0.2
@@ -20,8 +19,8 @@ OBJDIR = $(BUILDDIR)/.obj
 STATICLIB = $(BUILDDIR)/lib$(LIBNAME).a
 ARCHIVES = $(foreach dir,$(DIRS),$(BUILDDIR)/lib$(dir).a)
 OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c)) $(OBJDIR)/rng.o
-#CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
-CFLAGS += -O0 -g -Wall -fPIC -Icommon
+CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
+#CFLAGS += -O0 -g -Wall -fPIC -Icommon
 
 
 # Some cipher-specific options
@@ -148,19 +147,6 @@ endef
 # Generate targets for all the cipher subdirectories
 $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
 
-# OpenSSL engine dynamic lib
-ENGINE_LIB:=$(BUILDDIR)/libnistpqc_engine.$(SHAREDLIB_EXT)
-ENGINE_OBJ:=$(BUILDDIR)/openssl/nistpqc_engine.o
-ENGINE_SRC:=openssl/nistpqc_engine.c
-ENGINE_INSTALL_PATH:=$(PREFIX)/lib/engines-1.1/nistpqc.$(SHAREDLIB_EXT)
-$(ENGINE_OBJ): $(ENGINE_SRC)
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDE) -I. -c -o $@ $^
-$(ENGINE_LIB): $(STATICLIB) $(ENGINE_OBJ)
-	$(CC) -shared -o $@ $(STATIC_INPUTS) -L$(PREFIX)/lib -lcrypto -ldl 
-engine:  $(ENGINE_LIB)
-
-
 
 # Tests
 TEST_EXE = $(BUILDDIR)/nistpqc_test
@@ -175,8 +161,6 @@ install: $(STATICLIB) $(SHAREDLIB)
 	@echo "Installing static library $(notdir $(STATICLIB))"
 	@$(INSTALL) -d $(PREFIX)/lib
 	@$(INSTALL) -m 644 $(STATICLIB) $(PREFIX)/lib/
-	@echo "Installing OpenSSL engine to $(ENGINE_INSTALL_PATH)"
-	@$(INSTALL) -m 755 $(ENGINE_LIB) $(ENGINE_INSTALL_PATH)
 ifeq ($(UNAME),Darwin)
 	@ln -sf $(PREFIX)/lib/$(notdir $(SHAREDLIB)) $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
@@ -202,7 +186,6 @@ uninstall:
 	@rm -f $(PREFIX)/include/nistpqc_api.h
 	@rm -f $(PREFIX)/lib/$(notdir $(STATICLIB))
 	@rm -f $(PREFIX)/lib/$(notdir $(SHAREDLIB))
-	@rm -f $(ENGINE_INSTALL_PATH)
 ifeq ($(UNAME),Darwin)
 	@rm -f $(PREFIX)/lib/lib$(LIBNAME).dylib
 else ifeq ($(UNAME),Linux)
