@@ -7,7 +7,10 @@ if [[ $# -ne 2 ]]; then
 	exit -1
 fi;
 
+if [ "$UNAME" == "" ]; then
 UNAME=`uname -s`
+fi
+
 if [ "$UNAME" == "Linux" ]; then
 	$OBJCOPY  `cat $1/symbols.map | sed -e "s/^\(.*\) \(.*\)$/--redefine-sym \1=\2/g" | tr '\n' ' '` $2
     symbols=(`nm --defined-only -f p $2 | cut -f1 -d' ' | grep -v "^$1"`)

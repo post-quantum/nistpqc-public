@@ -1,5 +1,5 @@
 #
-# 'make' to build the native static library, shared library, and OpenSSL engine
+# 'make' to build the native static library, shared library
 # 'make native' to build just the static and shared libs
 # 'make test' to build the test suite
 # 'make android' to build static library for Android apps
@@ -14,7 +14,7 @@ ifeq ($(PREFIX),)
 	PREFIX := /usr/local
 endif
 DIRS = $(notdir $(wildcard crypto/*))
-UNAME := $(shell uname -s)
+export UNAME=$(shell uname -s)
 OBJDIR = $(BUILDDIR)/.obj
 STATICLIB = $(BUILDDIR)/lib$(LIBNAME).a
 ARCHIVES = $(foreach dir,$(DIRS),$(BUILDDIR)/lib$(dir).a)
@@ -38,51 +38,53 @@ endif
 ifndef OPENSSL
 $(error Please set OPENSSL to point to your BoringSSL or OpenSSL source as per https://wiki.strongswan.org/projects/strongswan/wiki/AndroidVPNClientBuild#The-openssl-Directory)
 endif
-	BUILDDIR:=build/android
-	TOOLCHAIN:=$(BUILDDIR)/toolchain
-	target_host=aarch64-linux-android
-	export AR=$(target_host)-ar
-	export AS=$(target_host)-clang
-	export CC=$(target_host)-clang
-	export CXX=$(target_host)-clang++
-	export LD=$(target_host)-ld
-	export NM=$(target_host)-nm
-	export OBJCOPY=$(target_host)-objcopy
-	export RANLIB=$(target_host)-ranlib
-	export PATH:=$(PATH):$(TOOLCHAIN)/bin
-	export CFLAGS=-fPIE -fPIC -I$(OPENSSL)/include
-	export LDFLAGS=-pie
+BUILDDIR:=build/android
+TOOLCHAIN:=$(BUILDDIR)/toolchain
+target_host=$(TOOLCHAIN)/bin/aarch64-linux-android
+export AR=$(target_host)-ar
+export AS=$(target_host)-clang
+export CC=$(target_host)-clang
+export CXX=$(target_host)-clang++
+export LD=$(target_host)-ld
+export NM=$(target_host)-nm
+export OBJCOPY=$(target_host)-objcopy
+export RANLIB=$(target_host)-ranlib
+export CFLAGS:=$(CFLAGS) -fPIE -fPIC -I$(OPENSSL)/include
+export LDFLAGS:=$(LDFLAGS) -pie
+UNAME=Linux
 
 $(TOOLCHAIN):
 	$(ANDROID_SDK)/ndk-bundle/build/tools/make_standalone_toolchain.py --arch arm64 --api 26 --install-dir=$(TOOLCHAIN)
 
 # Native builds
 else
-	BUILDDIR:=build/native
-	export NM=nm
-	export OBJCOPY=objcopy
-	export RANLIB=ranlib
-	LIBTOOL=libtool
+BUILDDIR:=build/native
+export NM=nm
+export OBJCOPY=objcopy
+export RANLIB=ranlib
+LIBTOOL=libtool
+endif
+
 ifeq ($(UNAME),Darwin)
-	CFLAGS += -I$(PREFIX)/include
-	LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
-	LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
-	LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
-	SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
-	SHAREDLIB_EXT:=dylib
-	STATIC_INPUTS=$(filter %.a,$^) $(filter %.o,$^)
-	TEST_LIBS = $(STATICLIB) -L$(PREFIX)/lib -lcrypto
+CFLAGS += -I$(PREFIX)/include
+LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
+LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
+LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
+SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
+SHAREDLIB_EXT:=dylib
+STATIC_INPUTS=$(filter %.a,$^) $(filter %.o,$^)
+TEST_LIBS = $(STATICLIB) -L$(PREFIX)/lib -lcrypto
 else ifeq ($(UNAME),Linux)
-	LDFLAGS += -shared
-	SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so.$(VERSION)
-	SONAME = lib$(LIBNAME).so.$(shell echo $(VERSION) | cut -f1 -d'.')
-	SHAREDLIB_EXT:=so
-	STATIC_INPUTS=-Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^)
-	TEST_LIBS = $(STATICLIB) -lcrypto
+LDFLAGS += -shared
+SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so.$(VERSION)
+SONAME = lib$(LIBNAME).so.$(shell echo $(VERSION) | cut -f1 -d'.')
+SHAREDLIB_EXT:=so
+STATIC_INPUTS=-Wl,--whole-archive $(filter %.a,$^) -Wl,--no-whole-archive $(filter %.o,$^)
+TEST_LIBS = $(STATICLIB) -lcrypto
 else
-	$(error Unsupported platform $(UNAME))
+$(error Unsupported platform $(UNAME))
 endif
-endif
+
 
 
 
