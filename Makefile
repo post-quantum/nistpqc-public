@@ -51,7 +51,7 @@ export OBJCOPY=$(target_host)-objcopy
 export RANLIB=$(target_host)-ranlib
 export CFLAGS:=$(CFLAGS) -fPIE -fPIC -I$(OPENSSL)/include
 export LDFLAGS:=$(LDFLAGS) -pie
-UNAME=Linux
+export UNAME=Linux
 
 $(TOOLCHAIN):
 	$(ANDROID_SDK)/ndk-bundle/build/tools/make_standalone_toolchain.py --arch arm64 --api 26 --install-dir=$(TOOLCHAIN)
@@ -138,7 +138,7 @@ ifeq ($(UNAME),Linux)
 else ifeq ($(UNAME),Darwin)
 	$(LIBTOOL) -static -o $$@ $$^
 endif
-	cd crypto && bash ../scripts/update_library.sh $(1) ../$$@ && cd ..
+	bash scripts/update_library.sh $(1) $$@
 
 $$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
