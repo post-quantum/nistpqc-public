@@ -73,10 +73,10 @@ export LIBTOOL=$(TOOLCHAIN)/libtool
 export ARCH=arm64
 CFLAGS+= -std=gnu99 -arch arm64 -miphoneos-version-min=9.0 -isysroot $(shell xcrun --sdk iphoneos --show-sdk-path) 
 
-
 # Native builds
 else
 BUILDDIR:=build/native
+export LD=ld
 export NM=nm
 export OBJCOPY=objcopy
 export RANLIB=ranlib
