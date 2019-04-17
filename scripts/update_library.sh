@@ -10,6 +10,9 @@ fi;
 if [ "$UNAME" == "" ]; then
 UNAME=`uname -s`
 fi
+if [ "$ARCH" == "" ]; then
+ARCH=`uname -m`
+fi
 if [ "$NM" == "" ]; then
 NM=nm
 fi
@@ -20,7 +23,7 @@ if [ "$UNAME" == "Linux" ]; then
         $OBJCOPY --redefine-sym $item="$1_$item" $2
     done
 elif [ "$UNAME" == "Darwin" ]; then
-    ld -r -arch `uname -m` -o $2 `cat crypto/$1/symbols.map | sed -e 's/^\(.*\) \(.*\)$/-alias _\1 _\2 -exported_symbol _\2/g' | tr '\n' ' '` $2
+    $LD -r -arch $ARCH -o $2 `cat crypto/$1/symbols.map | sed -e 's/^\(.*\) \(.*\)$/-alias _\1 _\2 -exported_symbol _\2/g' | tr '\n' ' '` $2
 else
     echo "Unsupported platform $UNAME"
     exit -1

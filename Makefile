@@ -3,6 +3,7 @@
 # 'make native' to build just the static and shared libs
 # 'make test' to build the test suite
 # 'make android' to build static library for Android apps
+# 'make ios' to build static library for iOS apps
 # 'sudo make install' to install everything you built.
 
 
@@ -56,6 +57,23 @@ export UNAME=Linux
 $(TOOLCHAIN):
 	$(ANDROID_SDK)/ndk-bundle/build/tools/make_standalone_toolchain.py --arch arm64 --api 26 --install-dir=$(TOOLCHAIN)
 
+# iOS
+else ifeq ($(MAKECMDGOALS),ios)
+BUILDDIR:=build/ios
+TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
+export AR=$(TOOLCHAIN)/ar
+export AS=$(TOOLCHAIN)/as
+export CC=$(TOOLCHAIN)/clang
+export CXX=$(TOOLCHAIN)/clang++
+export LD=$(TOOLCHAIN)/ld
+export NM=$(TOOLCHAIN)/nm
+export OBJCOPY=objcopy
+export RANLIB=$(TOOLCHAIN)/ranlib
+export LIBTOOL=$(TOOLCHAIN)/libtool
+export ARCH=arm64
+CFLAGS+= -std=gnu99 -arch arm64 -miphoneos-version-min=9.0 -isysroot $(shell xcrun --sdk iphoneos --show-sdk-path) 
+
+
 # Native builds
 else
 BUILDDIR:=build/native
@@ -91,6 +109,8 @@ endif
 native : $(SHAREDLIB) $(STATICLIB)
 
 android: $(TOOLCHAIN) $(STATICLIB)
+
+ios: $(STATICLIB)
 
 # Shared library (libnistpqc.dylib or libnistpqc.so)
 $(SHAREDLIB) : $(ARCHIVES) $(OBJECTS)
