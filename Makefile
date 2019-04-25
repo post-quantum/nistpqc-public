@@ -58,7 +58,7 @@ $(TOOLCHAIN):
 	$(ANDROID_SDK)/ndk-bundle/build/tools/make_standalone_toolchain.py --arch arm64 --api 26 --install-dir=$(TOOLCHAIN)
 
 # iOS
-else ifeq ($(MAKECMDGOALS),ios)
+else ifeq ($(findstring ios,$(MAKECMDGOALS)),ios)
 BUILDDIR:=build/ios
 TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
 export AR=$(TOOLCHAIN)/ar
@@ -70,8 +70,16 @@ export NM=$(TOOLCHAIN)/nm
 export OBJCOPY=objcopy
 export RANLIB=$(TOOLCHAIN)/ranlib
 export LIBTOOL=$(TOOLCHAIN)/libtool
+
+ifeq ($(MAKECMDGOALS),ios_arm64)
 export ARCH=arm64
-CFLAGS+= -std=gnu99 -arch arm64 -miphoneos-version-min=9.0 -isysroot $(shell xcrun --sdk iphoneos --show-sdk-path) 
+XCODE_SDK:=iphoneos
+else
+export ARCH=x86_64
+XCODE_SDK:=iphonesimulator
+endif
+CFLAGS+= -std=gnu99 -arch $(ARCH) -miphoneos-version-min=9.0 -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) 
+BUILDDIR:=$(BUILDDIR)/$(ARCH)
 
 # Native builds
 else
@@ -110,7 +118,12 @@ native : $(SHAREDLIB) $(STATICLIB)
 
 android: $(TOOLCHAIN) $(STATICLIB)
 
-ios: $(STATICLIB)
+ios: 
+	echo lipo -create build/ios/arm64/libnistpqc.a build/ios/x86_64/libnistpqc.a -output build/ios/libnistpqc.a
+
+ios_arm64: $(STATICLIB)
+
+ios_x86_64: $(STATICLIB)
 
 # Shared library (libnistpqc.dylib or libnistpqc.so)
 $(SHAREDLIB) : $(ARCHIVES) $(OBJECTS)
