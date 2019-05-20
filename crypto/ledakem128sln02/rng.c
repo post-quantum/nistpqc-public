@@ -2,9 +2,9 @@
  *
  * <rng.c>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -182,7 +182,7 @@ seedexpander(AES_XOF_struct *ctx, unsigned char *x, unsigned long xlen)
 void
 AES256_ECB(unsigned char *key, unsigned char *ptx, unsigned char *ctx)
 {
-   uint32_t round_key[4*(NROUNDS + 1)];
+   uint32_t round_key[4*(NROUNDS + 1)] = {0x00};
    rijndaelKeySetupEnc(round_key, key, KEYLEN_b);
    rijndaelEncrypt(round_key, NROUNDS, ptx, ctx);
 }
@@ -274,8 +274,9 @@ void deterministic_random_byte_generator(unsigned char *const output,
    /* DRBG context initialization */
    AES256_CTR_DRBG_struct ctx;
    unsigned char   seed_material[48];
+   memset(seed_material, 0x00, 48);
+   memcpy(seed_material, seed, seed_length);
 
-   memcpy(seed_material, seed, 48);
    memset(ctx.Key, 0x00, 32);
    memset(ctx.V, 0x00, 16);
    AES256_CTR_DRBG_Update(seed_material, ctx.Key, ctx.V);

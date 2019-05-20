@@ -2,9 +2,9 @@
  *
  * <H_Q_matrices_generation.h>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -43,8 +43,7 @@ void generateHPosOnes_HtrPosOnes(POSITION_T HPosOnes[N0][DV],
 
 /*----------------------------------------------------------------------------*/
 
-void generateQPosOnes_QtrPosOnes(POSITION_T QPosOnes[N0][M],
-                                 POSITION_T QtrPosOnes[N0][M],
-                                 AES_XOF_struct *niederreiter_keys_expander);
+void generateQsparse(POSITION_T pos_ones[N0][M],
+                     AES_XOF_struct *niederreiter_keys_expander);
 
 /*----------------------------------------------------------------------------*/

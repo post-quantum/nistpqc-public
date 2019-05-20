@@ -2,9 +2,9 @@
  *
  * <niederreiter_decrypt.c>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -53,15 +53,55 @@ int decrypt_niederreiter(DIGIT err[],            // N0 circ poly
 
    /**************************************************************************/
    // sequence of N0 circ block matrices (p x p):
-   DIGIT Ln0tr[NUM_DIGITS_GF2X_ELEMENT] = {0x00};
    POSITION_T HPosOnes[N0][DV];
    POSITION_T HtrPosOnes[N0][DV];
-   POSITION_T QtrPosOnes[N0][M];
    POSITION_T QPosOnes[N0][M];
+
+   int is_L_full;
+   POSITION_T LPosOnes[N0][DV*M];
+   do {
    generateHPosOnes_HtrPosOnes(HPosOnes, HtrPosOnes,
                                &niederreiter_decrypt_expander);
-   generateQPosOnes_QtrPosOnes(QPosOnes, QtrPosOnes,
-                               &niederreiter_decrypt_expander);
+   generateQsparse(QPosOnes, &niederreiter_decrypt_expander);
+   for (int i = 0; i < N0; i++) {
+        for (int j = 0; j< DV*M; j++) {
+           LPosOnes[i][j]=INVALID_POS_VALUE;
+        }
+     }
+
+     POSITION_T auxPosOnes[DV*M];
+     unsigned char processedQOnes[N0] = {0};
+     for (int colQ = 0; colQ < N0; colQ++) {
+        for (int i = 0; i < N0; i++) {
+           gf2x_mod_mul_sparse(DV*M, auxPosOnes,
+                               DV, HPosOnes[i],
+                               qBlockWeights[i][colQ], QPosOnes[i]+processedQOnes[i]);
+           gf2x_mod_add_sparse(DV*M, LPosOnes[colQ],
+                               DV*M, LPosOnes[colQ],
+                               DV*M, auxPosOnes);
+           processedQOnes[i] += qBlockWeights[i][colQ];
+        }
+     }
+     is_L_full = 1;
+     for (int i = 0; i < N0; i++) {
+        is_L_full = is_L_full && (LPosOnes[i][DV*M-1] != INVALID_POS_VALUE);
+     }
+   } while(!is_L_full);
+
+   POSITION_T QtrPosOnes[N0][M];
+   unsigned transposed_ones_idx[N0] = {0x00};
+   for(unsigned source_row_idx=0; source_row_idx < N0 ; source_row_idx++) {
+      int currQoneIdx = 0; // position in the column of QtrPosOnes[][...]
+      int endQblockIdx = 0;
+      for (int blockIdx = 0; blockIdx < N0; blockIdx++) {
+         endQblockIdx += qBlockWeights[source_row_idx][blockIdx];
+         for (; currQoneIdx < endQblockIdx; currQoneIdx++) {
+            QtrPosOnes[blockIdx][transposed_ones_idx[blockIdx]] = (P -
+                  QPosOnes[source_row_idx][currQoneIdx]) % P;
+            transposed_ones_idx[blockIdx]++;
+         }
+      }
+   }
 
    POSITION_T auxSparse[DV*M];
    POSITION_T Ln0trSparse[DV*M];
@@ -73,7 +113,7 @@ int decrypt_niederreiter(DIGIT err[],            // N0 circ poly
    for (int i = 0; i < N0; i++) {
       gf2x_mod_mul_sparse(DV*M, auxSparse,
                           DV,   HPosOnes[i],
-                          qBlockWeights[i][N0-1], &QPosOnes[i][M-qBlockWeights[i][N0-1]]
+                          qBlockWeights[i][N0-1], &QPosOnes[i][ M-qBlockWeights[i][N0-1] ]
                          );
       gf2x_mod_add_sparse(DV*M, Ln0trSparse,
                           DV*M, Ln0trSparse,
@@ -82,20 +122,34 @@ int decrypt_niederreiter(DIGIT err[],            // N0 circ poly
    } // end for i
    gf2x_transpose_in_place_sparse(DV*M, Ln0trSparse);
 
-   for (int i = 0; i < DV*M && Ln0trSparse[i] != INVALID_POS_VALUE; i++) {
-      gf2x_set_coeff(Ln0tr, Ln0trSparse[i], (DIGIT) 0x1);
-   }
-
-   int decryptOk;
    DIGIT privateSyndrome[NUM_DIGITS_GF2X_ELEMENT];
-   gf2x_mod_mul(privateSyndrome,
-                Ln0tr,
-                syndrome
-               );
+   gf2x_mod_mul_dense_to_sparse(privateSyndrome,
+                                syndrome,
+                                Ln0trSparse,
+                                DV*M);
 
+   /* prepare mockup error vector in case a decoding failure occurs */
+   DIGIT mockup_error_vector[N0*NUM_DIGITS_GF2X_ELEMENT];
+   memset(mockup_error_vector, 0x00, N0*NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B);
+   memcpy(mockup_error_vector, syndrome, NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B);
+   seedexpander(&niederreiter_decrypt_expander, 
+                ((unsigned char*) mockup_error_vector)+(NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B), TRNG_BYTE_LENGTH);
+   
+   int decryptOk = 0;
    memset(err, 0x00, N0*NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B);
    decryptOk = bf_decoding(err, (const POSITION_T (*)[DV]) HtrPosOnes,
                            (const POSITION_T (*)[M]) QtrPosOnes, privateSyndrome);
+
+   int err_weight = 0;
+   for (int i =0 ;i < N0; i++){
+       err_weight += population_count(err+(NUM_DIGITS_GF2X_ELEMENT*i));
+   }
+   decryptOk = decryptOk && (err_weight == NUM_ERRORS_T);
+   
+   if (!decryptOk){
+       memcpy(err,mockup_error_vector, N0*NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B);
+   }
+   
    return decryptOk;
 } // end decrypt_niederreiter
 

@@ -12,12 +12,29 @@
 #include <stddef.h>
 
 
+// Definition of operating system
+
+#define OS_WIN       1
+#define OS_LINUX     2
+
+#if defined(__WINDOWS__)        // Microsoft Windows OS
+    #define OS_TARGET OS_WIN
+#elif defined(__LINUX__)        // Linux OS
+    #define OS_TARGET OS_LINUX 
+#else
+    #error -- "Unsupported OS"
+#endif
+
+
 // Definition of compiler
 
-#define COMPILER_GCC     1
-#define COMPILER_CLANG   2
+#define COMPILER_VC      1
+#define COMPILER_GCC     2
+#define COMPILER_CLANG   3
 
-#if defined(__GNUC__)           // GNU GCC compiler
+#if defined(_MSC_VER)           // Microsoft Visual C compiler
+    #define COMPILER COMPILER_VC
+#elif defined(__GNUC__)         // GNU GCC compiler
     #define COMPILER COMPILER_GCC   
 #elif defined(__clang__)        // Clang compiler
     #define COMPILER COMPILER_CLANG
@@ -60,16 +77,31 @@
 #define RADIX64             64
 
 
-// Selection of implementation: optimized_generic
+// Selection of generic, portable implementation
 
-#if defined(_OPTIMIZED_GENERIC_)                      
-    #define OPTIMIZED_GENERIC_IMPLEMENTATION
+#if defined(_GENERIC_)                      
+    #define GENERIC_IMPLEMENTATION
+#elif defined(_FAST_)                      
+    #define FAST_IMPLEMENTATION
 #endif
 
 
 // Extended datatype support
-                     
-typedef uint64_t uint128_t[2];
+ 
+#if defined(GENERIC_IMPLEMENTATION)                       
+    typedef uint64_t uint128_t[2];
+#elif (TARGET == TARGET_AMD64 && OS_TARGET == OS_LINUX) && (COMPILER == COMPILER_GCC || COMPILER == COMPILER_CLANG)
+    #define UINT128_SUPPORT
+    typedef unsigned uint128_t __attribute__((mode(TI)));
+#elif (TARGET == TARGET_ARM64 && OS_TARGET == OS_LINUX) && (COMPILER == COMPILER_GCC || COMPILER == COMPILER_CLANG)
+    #define UINT128_SUPPORT
+    typedef unsigned uint128_t __attribute__((mode(TI)));
+#elif (TARGET == TARGET_AMD64) && (OS_TARGET == OS_WIN && COMPILER == COMPILER_VC)
+    #define SCALAR_INTRIN_SUPPORT   
+    typedef uint64_t uint128_t[2];
+#else
+    #error -- "Unsupported configuration"
+#endif
     
 
 // Macro definitions
@@ -103,6 +135,8 @@ static __inline unsigned int is_digit_lessthan_ct(digit_t x, digit_t y)
 
 
 /********************** Macros for platform-dependent operations **********************/
+
+#if defined(GENERIC_IMPLEMENTATION)
 
 // Digit multiplication
 #define MUL(multiplier, multiplicand, hi, lo)                                                     \
@@ -140,6 +174,92 @@ static __inline unsigned int is_digit_lessthan_ct(digit_t x, digit_t y)
 // 128-bit addition with output carry
 #define ADC128(addend1, addend2, carry, addition)                                                 \
     (carry) = mp_add((digit_t*)(addend1), (digit_t*)(addend2), (digit_t*)(addition), NWORDS_FIELD);
+
+#elif (TARGET == TARGET_AMD64 && OS_TARGET == OS_WIN)
+
+// Digit multiplication
+#define MUL(multiplier, multiplicand, hi, lo)                                                     \
+    (lo) = _umul128((multiplier), (multiplicand), (hi));                
+
+// Digit addition with carry
+#define ADDC(carryIn, addend1, addend2, carryOut, sumOut)                                         \
+    (carryOut) = _addcarry_u64((carryIn), (addend1), (addend2), &(sumOut));
+
+// Digit subtraction with borrow
+#define SUBC(borrowIn, minuend, subtrahend, borrowOut, differenceOut)                             \
+    (borrowOut) = _subborrow_u64((borrowIn), (minuend), (subtrahend), &(differenceOut));
+
+// Digit shift right
+#define SHIFTR(highIn, lowIn, shift, shiftOut, DigitSize)                                         \
+    (shiftOut) = __shiftright128((lowIn), (highIn), (shift));
+
+// Digit shift left
+#define SHIFTL(highIn, lowIn, shift, shiftOut, DigitSize)                                         \
+    (shiftOut) = __shiftleft128((lowIn), (highIn), (shift));
+
+// 64x64-bit multiplication
+#define MUL128(multiplier, multiplicand, product)                                                 \
+    (product)[0] = _umul128((multiplier), (multiplicand), &(product)[1]);
+
+// 128-bit addition, inputs < 2^127
+#define ADD128(addend1, addend2, addition)                                                        \
+    { unsigned char carry = _addcarry_u64(0, (addend1)[0], (addend2)[0], &(addition)[0]);         \
+    _addcarry_u64(carry, (addend1)[1], (addend2)[1], &(addition)[1]); }
+
+// 128-bit addition with output carry
+#define ADC128(addend1, addend2, carry, addition)                                                 \
+    (carry) = _addcarry_u64(0, (addend1)[0], (addend2)[0], &(addition)[0]);                       \
+    (carry) = _addcarry_u64((carry), (addend1)[1], (addend2)[1], &(addition)[1]); 
+
+// 128-bit subtraction, subtrahend < 2^127
+#define SUB128(minuend, subtrahend, difference)                                                   \
+    { unsigned char borrow = _subborrow_u64(0, (minuend)[0], (subtrahend)[0], &(difference)[0]);  \
+    _subborrow_u64(borrow, (minuend)[1], (subtrahend)[1], &(difference)[1]); }
+
+// 128-bit right shift, max. shift value is 64
+#define SHIFTR128(Input, shift, shiftOut)                                                         \
+    (shiftOut)[0]  = __shiftright128((Input)[0], (Input)[1], (shift));                            \
+    (shiftOut)[1] = (Input)[1] >> (shift);    
+
+// 128-bit left shift, max. shift value is 64
+#define SHIFTL128(Input, shift, shiftOut)                                                         \
+    (shiftOut)[1]  = __shiftleft128((Input)[0], (Input)[1], (shift));                             \
+    (shiftOut)[0] = (Input)[0] << (shift);  
+
+#define MULADD128(multiplier, multiplicand, addend, carry, result);    \
+    { uint128_t product;                                               \
+      MUL128(multiplier, multiplicand, product);                       \
+      ADC128(addend, product, carry, result); }   
+
+#elif ((TARGET == TARGET_AMD64 || TARGET == TARGET_ARM64) && OS_TARGET == OS_LINUX)
+
+// Digit multiplication
+#define MUL(multiplier, multiplicand, hi, lo)                                                     \
+    { uint128_t tempReg = (uint128_t)(multiplier) * (uint128_t)(multiplicand);                    \
+    *(hi) = (digit_t)(tempReg >> RADIX);                                                          \
+    (lo) = (digit_t)tempReg; }
+
+// Digit addition with carry
+#define ADDC(carryIn, addend1, addend2, carryOut, sumOut)                                         \
+    { uint128_t tempReg = (uint128_t)(addend1) + (uint128_t)(addend2) + (uint128_t)(carryIn);     \
+    (carryOut) = (digit_t)(tempReg >> RADIX);                                                     \
+    (sumOut) = (digit_t)tempReg; }  
+    
+// Digit subtraction with borrow
+#define SUBC(borrowIn, minuend, subtrahend, borrowOut, differenceOut)                             \
+    { uint128_t tempReg = (uint128_t)(minuend) - (uint128_t)(subtrahend) - (uint128_t)(borrowIn); \
+    (borrowOut) = (digit_t)(tempReg >> (sizeof(uint128_t)*8 - 1));                                \
+    (differenceOut) = (digit_t)tempReg; }
+
+// Digit shift right
+#define SHIFTR(highIn, lowIn, shift, shiftOut, DigitSize)                                         \
+    (shiftOut) = ((lowIn) >> (shift)) ^ ((highIn) << (RADIX - (shift)));
+
+// Digit shift left
+#define SHIFTL(highIn, lowIn, shift, shiftOut, DigitSize)                                         \
+    (shiftOut) = ((highIn) << (shift)) ^ ((lowIn) >> (RADIX - (shift)));
+
+#endif
 
 
 #endif

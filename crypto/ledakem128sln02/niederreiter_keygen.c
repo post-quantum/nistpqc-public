@@ -2,9 +2,9 @@
  *
  * <niederreiter_keygen.c>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -49,7 +49,7 @@ static inline void zeroize( void *v, size_t n )
 
 void key_gen_niederreiter(publicKeyNiederreiter_t   *const pk,
                           privateKeyNiederreiter_t *const sk,
-                          AES_XOF_struct *niederreiter_keys_expander)
+                          AES_XOF_struct *keys_expander)
 {
    // sequence of N0 circ block matrices (p x p): Hi
 
@@ -59,51 +59,62 @@ void key_gen_niederreiter(publicKeyNiederreiter_t   *const pk,
    with weight DV. Each index contains the position of a '1' digit in the
    corresponding Htr block */
 
-   POSITION_T QPosOnes[N0][M];
-   POSITION_T QtrPosOnes[N0][M];
-   /* Sparse representation of the matrix (Qtr).
+   /* Sparse representation of the matrix (Q).
    A matrix containing the positions of the ones in the circulant
    blocks of Q. Each row contains the position of the
-   ones of all the blocks of a row of Qtr as exponent+
+   ones of all the blocks of a row of Q as exponent+
    P*block_position */
+   POSITION_T QPosOnes[N0][M];
 
-   generateHPosOnes_HtrPosOnes(HPosOnes,
-                               HtrPosOnes,
-                               niederreiter_keys_expander);
-
-   generateQPosOnes_QtrPosOnes(QPosOnes,
-                               QtrPosOnes,
-                               niederreiter_keys_expander);
-
+   /*Rejection-sample for a full L*/
    POSITION_T LPosOnes[N0][DV*M];
-   for (int i = 0; i < N0; i++) {
-      for (int j = 0; j< DV*M; j++) {
-         LPosOnes[i][j]=INVALID_POS_VALUE;
-      }
-   }
+   int is_L_full;
+   do {
+     generateHPosOnes_HtrPosOnes(HPosOnes,
+                                 HtrPosOnes,
+                                 keys_expander);
 
-   POSITION_T auxPosOnes[DV*M];
-   unsigned char processedQOnes[N0] = {0};
-   for (int colQ = 0; colQ < N0; colQ++) {
-      for (int i = 0; i < N0; i++) {
-         gf2x_mod_mul_sparse(DV*M, auxPosOnes,
-                             DV, HPosOnes[i],
-                             qBlockWeights[i][colQ], QPosOnes[i]+processedQOnes[i]);
-         gf2x_mod_add_sparse(DV*M, LPosOnes[colQ],
-                             DV*M, LPosOnes[colQ],
-                             DV*M, auxPosOnes);
-         processedQOnes[i] += qBlockWeights[i][colQ];
-      }
-   }
+     generateQsparse(QPosOnes,
+                     keys_expander);
+     for (int i = 0; i < N0; i++) {
+        for (int j = 0; j< DV*M; j++) {
+           LPosOnes[i][j]=INVALID_POS_VALUE;
+        }
+     }
+
+     POSITION_T auxPosOnes[DV*M];
+     unsigned char processedQOnes[N0] = {0};
+     for (int colQ = 0; colQ < N0; colQ++) {
+        for (int i = 0; i < N0; i++) {
+           gf2x_mod_mul_sparse(DV*M, auxPosOnes,
+                               DV, HPosOnes[i],
+                               qBlockWeights[i][colQ], QPosOnes[i]+processedQOnes[i]);
+           gf2x_mod_add_sparse(DV*M, LPosOnes[colQ],
+                               DV*M, LPosOnes[colQ],
+                               DV*M, auxPosOnes);
+           processedQOnes[i] += qBlockWeights[i][colQ];
+        }
+     }
+     is_L_full = 1;
+     for (int i = 0; i < N0; i++) {
+        is_L_full = is_L_full && (LPosOnes[i][DV*M-1] != INVALID_POS_VALUE);
+     }
+   } while(!is_L_full);
 
    DIGIT Ln0dense[NUM_DIGITS_GF2X_ELEMENT] = {0x00};
    for(int j = 0; j < DV*M; j++) {
       if(LPosOnes[N0-1][j] != INVALID_POS_VALUE)
          gf2x_set_coeff(Ln0dense,LPosOnes[N0-1][j],1);
    }
-
    DIGIT Ln0Inv[NUM_DIGITS_GF2X_ELEMENT] = {0x00};
-   gf2x_mod_inverse(Ln0Inv, Ln0dense);
+
+#ifdef HIGH_PERFORMANCE_X86_64
+#define GF2X_DIGIT_MOD_INVERSE gf2x_mod_inverse_KTT
+#else
+#define GF2X_DIGIT_MOD_INVERSE gf2x_mod_inverse
+#endif
+   
+   GF2X_DIGIT_MOD_INVERSE(Ln0Inv, Ln0dense);
    for (int i = 0; i < N0-1; i++) {
       gf2x_mod_mul_dense_to_sparse(pk->Mtr+i*NUM_DIGITS_GF2X_ELEMENT,
                                    Ln0Inv,

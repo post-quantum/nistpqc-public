@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-my @algs = qw(kyber512 ledakem128sln02 newhope512cca ntrukem443 ntrulpr4591761 sikep503);
+my @algs = qw(kyber512 ledakem128sln02 newhope512cca ntrukem443 ntrulpr761 sikep503);
 
 # Single part tests
 foreach my $alg (@algs) {

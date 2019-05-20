@@ -7,7 +7,8 @@
 #ifndef __P503_INTERNAL_H__
 #define __P503_INTERNAL_H__
 
-#include "api.h"
+#include "config.h"
+ 
 
 #if (TARGET == TARGET_AMD64)
     #define NWORDS_FIELD    8               // Number of words of a 503-bit field element
@@ -43,7 +44,7 @@
 #define MASK_ALICE              0x03 
 #define MASK_BOB                0x0F 
 #define PRIME                   p503 
-#define PARAM_A                 0  
+#define PARAM_A                 6  
 #define PARAM_C                 1
 // Fixed parameters for isogeny tree computation
 #define MAX_INT_POINTS_ALICE    7        
@@ -52,7 +53,7 @@
 #define MAX_Bob                 159
 #define MSG_BYTES               24
 #define SECRETKEY_A_BYTES       (OALICE_BITS + 7) / 8
-#define SECRETKEY_B_BYTES       (OBOB_BITS + 7) / 8
+#define SECRETKEY_B_BYTES       (OBOB_BITS - 1 + 7) / 8
 #define FP2_ENCODED_BYTES       2*((NBITS_FIELD + 7) / 8)
 
 
@@ -61,7 +62,6 @@
 typedef digit_t felm_t[NWORDS_FIELD];                                 // Datatype for representing 503-bit field elements (512-bit max.)
 typedef digit_t dfelm_t[2*NWORDS_FIELD];                              // Datatype for representing double-precision 2x503-bit field elements (512-bit max.) 
 typedef felm_t  f2elm_t[2];                                           // Datatype for representing quadratic extension field elements GF(p503^2)
-typedef f2elm_t publickey_t[3];                                       // Datatype for representing public keys equivalent to three GF(p503^2) elements
         
 typedef struct { f2elm_t X; f2elm_t Z; } point_proj;                  // Point representation in projective XZ Montgomery coordinates.
 typedef point_proj point_proj_t[1]; 
@@ -80,15 +80,13 @@ unsigned int mp_add(const digit_t* a, const digit_t* b, digit_t* c, const unsign
 // 503-bit multiprecision addition, c = a+b
 void mp_add503(const digit_t* a, const digit_t* b, digit_t* c);
 void mp_add503_asm(const digit_t* a, const digit_t* b, digit_t* c); 
-//void mp_addmask503_asm(const digit_t* a, const digit_t mask, digit_t* c);
-
-// 2x503-bit multiprecision addition, c = a+b
-void mp_add503x2(const digit_t* a, const digit_t* b, digit_t* c);
-void mp_add503x2_asm(const digit_t* a, const digit_t* b, digit_t* c);
 
 // Multiprecision subtraction, c = a-b, where lng(a) = lng(b) = nwords. Returns the borrow bit 
 unsigned int mp_sub(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords);
 digit_t mp_sub503x2_asm(const digit_t* a, const digit_t* b, digit_t* c);
+
+// Double 2x503-bit multiprecision subtraction, c = c-a-b, where c > a and c > b
+void mp_dblsub503x2_asm(const digit_t* a, const digit_t* b, digit_t* c);
 
 // Multiprecision left shift
 void mp_shiftleft(digit_t* x, unsigned int shift, const unsigned int nwords);
@@ -105,35 +103,16 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c);
 // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords);
 
-void multiply(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords); 
-
-// Montgomery multiplication modulo the group order, mc = ma*mb*r' mod order, where ma,mb,mc in [0, order-1]
-void Montgomery_multiply_mod_order(const digit_t* ma, const digit_t* mb, digit_t* mc, const digit_t* order, const digit_t* Montgomery_rprime);
-
-// (Non-constant time) Montgomery inversion modulo the curve order using a^(-1) = a^(order-2) mod order
-//void Montgomery_inversion_mod_order(const digit_t* ma, digit_t* mc, const digit_t* order, const digit_t* Montgomery_rprime);
-
-void Montgomery_inversion_mod_order_bingcd(const digit_t* a, digit_t* c, const digit_t* order, const digit_t* Montgomery_rprime, const digit_t* Montgomery_R2);
-
-// Conversion of elements in Z_r to Montgomery representation, where the order r is up to 384 bits.
-void to_Montgomery_mod_order(const digit_t* a, digit_t* mc, const digit_t* order, const digit_t* Montgomery_rprime, const digit_t* Montgomery_Rprime);
-
-// Conversion of elements in Z_r from Montgomery to standard representation, where the order is up to 384 bits.
-void from_Montgomery_mod_order(const digit_t* ma, digit_t* c, const digit_t* order, const digit_t* Montgomery_rprime);
-
-// Inversion modulo Alice's order 2^372.
-void inv_mod_orderA(const digit_t* a, digit_t* c);
-
 /************ Field arithmetic functions *************/
 
 // Copy of a field element, c = a
-void fpcopy503(const felm_t a, felm_t c);
+void fpcopy503(const digit_t* a, digit_t* c);
 
 // Zeroing a field element, a = 0
-void fpzero503(felm_t a);
+void fpzero503(digit_t* a);
 
 // Non constant-time comparison of two field elements. If a = b return TRUE, otherwise, return FALSE
-bool fpequal503_non_constant_time(const felm_t a, const felm_t b); 
+bool fpequal503_non_constant_time(const digit_t* a, const digit_t* b); 
 
 // Modular addition, c = a+b mod p503
 extern void fpadd503(const digit_t* a, const digit_t* b, digit_t* c);
@@ -156,27 +135,27 @@ void fpcorrection503(digit_t* a);
 void rdc_mont(const digit_t* a, digit_t* c);
             
 // Field multiplication using Montgomery arithmetic, c = a*b*R^-1 mod p503, where R=2^768
-void fpmul503_mont(const felm_t a, const felm_t b, felm_t c);
-void mul503_asm(const felm_t a, const felm_t b, dfelm_t c);
-void rdc503_asm(const dfelm_t ma, dfelm_t mc);
+void fpmul503_mont(const digit_t* a, const digit_t* b, digit_t* c);
+void mul503_asm(const digit_t* a, const digit_t* b, digit_t* c);
+void rdc503_asm(const digit_t* ma, digit_t* mc);
    
 // Field squaring using Montgomery arithmetic, c = a*b*R^-1 mod p503, where R=2^768
-void fpsqr503_mont(const felm_t ma, felm_t mc);
+void fpsqr503_mont(const digit_t* ma, digit_t* mc);
 
 // Conversion to Montgomery representation
-void to_mont(const felm_t a, felm_t mc);
+void to_mont(const digit_t* a, digit_t* mc);
     
 // Conversion from Montgomery representation to standard representation
-void from_mont(const felm_t ma, felm_t c);
+void from_mont(const digit_t* ma, digit_t* c);
 
 // Field inversion, a = a^-1 in GF(p503)
-void fpinv503_mont(felm_t a);
+void fpinv503_mont(digit_t* a);
 
 // Field inversion, a = a^-1 in GF(p503) using the binary GCD 
-void fpinv503_mont_bingcd(felm_t a);
+void fpinv503_mont_bingcd(digit_t* a);
 
 // Chain to compute (p503-3)/4 using Montgomery arithmetic
-void fpinv503_chain_mont(felm_t a);
+void fpinv503_chain_mont(digit_t* a);
 
 /************ GF(p^2) arithmetic functions *************/
     

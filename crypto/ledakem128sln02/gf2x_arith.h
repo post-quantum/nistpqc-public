@@ -2,9 +2,9 @@
  *
  * <gf2x_arith.h>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -33,6 +33,7 @@
 #pragma once
 
 #include "gf2x_limbs.h"
+#include "architecture_detect.h"
 
 /*----------------------------------------------------------------------------*/
 /*
@@ -75,17 +76,76 @@
  */
 /*----------------------------------------------------------------------------*/
 
-void gf2x_add(const int nr, DIGIT Res[],
+#define TC3
+
+#define MIN_KAR_DIGITS 9
+#define MIN_TOOM_DIGITS 50
+
+#if defined(TC3) 
+#define GF2X_MUL gf2x_mul_TC3
+#else
+#if defined(HIGH_PERFORMANCE_X86_64) || defined(HIGH_COMPATIBILITY_X86_64)
+#define GF2X_MUL gf2x_mul_avx
+#else /* if no ISA-specific optimizations are available */
+#define GF2X_MUL gf2x_mul_comb
+#endif
+
+#endif
+
+
+/*----------------------------------------------------------------------------*/
+
+static inline void gf2x_add(const int nr, DIGIT Res[],
+                            const int na, const DIGIT A[],
+                            const int nb, const DIGIT B[]) {
+#if (defined HIGH_PERFORMANCE_X86_64)
+ __m256i a, b;
+ unsigned i;
+ for(i = 0; i < nr/4; i++){
+     a = _mm256_lddqu_si256( (__m256i *)A + i );
+     b = _mm256_lddqu_si256( (__m256i *)B + i );
+     _mm256_storeu_si256(((__m256i *)Res + i), _mm256_xor_si256(a, b));
+ }
+ i = i*2;
+ if(nr %4 >= 2){
+ __m128i c, d;
+     c = _mm_lddqu_si128( (__m128i *)A + i );
+     d = _mm_lddqu_si128( (__m128i *)B + i );
+     _mm_storeu_si128(((__m128i *)Res + i), _mm_xor_si128(c, d));
+     i++;
+ }
+
+ if( (nr & 1) == 1){
+      Res[nr-1] = A[nr-1] ^ B[nr-1];
+ }
+
+#elif (defined HIGH_COMPATIBILITY_X86_64)
+ __m128i a, b;
+ for (unsigned i = 0; i < nr/2; i++){
+     a = _mm_lddqu_si128( (__m128i *)A + i );
+     b = _mm_lddqu_si128( (__m128i *)B + i );
+     _mm_storeu_si128(((__m128i *)Res + i), _mm_xor_si128(a, b));
+ }
+ if( (nr & 1) != 0){
+      Res[nr-1] = A[nr-1] ^ B[nr-1];
+ }
+#else
+   for (unsigned i = 0; i < nr; i++)
+      Res[i] = A[i] ^ B[i];
+#endif
+} // end gf2x_add
+
+
+/*----------------------------------------------------------------------------*/
+
+void GF2X_MUL(const int nr, DIGIT Res[],
               const int na, const DIGIT A[],
-              const int nb, const DIGIT B[]);
+              const int nb, const DIGIT B[]
+             );
 
+/* PRE: MAX ALLOWED ROTATION AMOUNT : DIGIT_SIZE_b */
+void right_bit_shift_n(const int length, DIGIT in[], const int amount);
 
-void gf2x_mul_comb(const int nr, DIGIT Res[],
-                   const int na, const DIGIT A[],
-                   const int nb, const DIGIT B[]
-                  );
-
-int gf2x_cmp(const unsigned lenA, const DIGIT A[],
-             const unsigned lenB, const DIGIT B[]);
-
+/* PRE: MAX ALLOWED ROTATION AMOUNT : DIGIT_SIZE_b */
+void left_bit_shift_n(const int length, DIGIT in[], const int amount);
 /*----------------------------------------------------------------------------*/

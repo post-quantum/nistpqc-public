@@ -23,10 +23,13 @@ OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c)) $(OBJDIR)/rng.o
 CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 #CFLAGS += -O0 -g -Wall -fPIC -Icommon
 
-
 # Some cipher-specific options
 sikep503_SOURCES = crypto/sikep503/P503.c crypto/sikep503/generic/fp_generic.c crypto/sikep503/sha3/fips202.c scripts/aux_api.c
-sikep503_DEFINES = -D _OPTIMIZED_GENERIC_ -D _AMD64_ -D __LINUX__
+sikep503_DEFINES = -D _OPTIMIZED_GENERIC_ -D __LINUX__ 
+#sikep503_SOURCES+= crypto/sikep503/ARM64/fp_arm64.c crypto/sikep503/ARM64/fp_arm64_asm.S
+#sikep503_DEFINES+= -D _ARM64_
+sikep503_SOURCES+= crypto/sikep503/AMD64/fp_x64.c crypto/sikep503/AMD64/fp_x64_asm.S
+sikep503_DEFINES+= -D _AMD64_
 ledakem128sln02_DEFINES = -DCATEGORY=1 -DN0=2
 
 
@@ -162,7 +165,10 @@ $(1)_OBJDIR=$(OBJDIR)/$(1)
 ifndef $(1)_SOURCES
 $(1)_SOURCES=$(wildcard crypto/$(1)/*.c) scripts/aux_api.c
 endif
-$(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES))
+#$(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES)) 
+$(1)_OBJS_C = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$(filter %.c, $$($(1)_SOURCES)))
+$(1)_OBJS_S = $$(patsubst %.S,$$($(1)_OBJDIR)/%.o, $$(filter %.S, $$($(1)_SOURCES)))
+$(1)_OBJS = $$($(1)_OBJS_C) $$($(1)_OBJS_S)
 
 $$($(1)_ARCHIVE) : $$($(1)_OBJS)
 ifeq ($(UNAME),Linux)
@@ -173,9 +179,13 @@ else ifeq ($(UNAME),Darwin)
 endif
 	bash scripts/update_library.sh $(1) $$@
 
-$$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
+$$($(1)_OBJS_C) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
 	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -Icrypto/$(1) -c -o $$@ $$<
+
+$$($(1)_OBJS_S) : $$($(1)_OBJDIR)/%.o : %.S
+	@mkdir -p $$(dir $$@)
+	$$(CC) $$(CFLAGS) -D__ASM_UNDER__ -E $$^ | $$(AS) -O3 -o $$@
 
 endef
 
