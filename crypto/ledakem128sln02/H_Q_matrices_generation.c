@@ -2,9 +2,9 @@
  *
  * <H_Q_matrices_generation.c>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -35,64 +35,38 @@
 
 /*----------------------------------------------------------------------------*/
 
-
 void generateHPosOnes_HtrPosOnes(POSITION_T HPosOnes[N0][DV],
-                                 POSITION_T HtrPosOnes[N0][DV],
-                                 AES_XOF_struct *niederreiter_keys_expander)
+                        POSITION_T HtrPosOnes[N0][DV],
+                        AES_XOF_struct *keys_expander
+                       )
 {
-
    for (int i = 0; i < N0; i++) {
-      /* Generate a random block of H */
-      rand_circulant_sparse_block(&HPosOnes[i][0],
+      /* Generate a random block of Htr */
+      rand_circulant_sparse_block(&HtrPosOnes[i][0],
                                   DV,
-                                  niederreiter_keys_expander);
-      /* Obtain directly the sparse representation of the block of Htr */
+                                  keys_expander);
+   }
+   for (int i = 0; i < N0; i++) {
+      /* Obtain directly the sparse representation of the block of H */
       for (int k = 0; k < DV; k++) {
-
-         HtrPosOnes[i][k] = (P - HPosOnes[i][k])  % P; /* transposes indexes */
+         HPosOnes[i][k] = (P - HtrPosOnes[i][k])  % P; /* transposes indexes */
       }// end for k
    }
-} // end generateHPosOnes_HtrPosOnes
-
+} // end generateHtr_HtrPosOnes
 
 /*----------------------------------------------------------------------------*/
-static
+
 void  generateQsparse(POSITION_T pos_ones[N0][M],
-                      AES_XOF_struct *niederreiter_keys_expander)
+                      AES_XOF_struct *keys_expander)
 {
    for (int i = 0; i < N0; i++) {
       int placed_ones = 0;
       for (int j = 0; j < N0; j++) {
          rand_circulant_sparse_block(&pos_ones[i][placed_ones],
                                      qBlockWeights[i][j],
-                                     niederreiter_keys_expander);
+                                     keys_expander);
          placed_ones += qBlockWeights[i][j];
       } // end for j
    } // end for i
 } // end generateQsparse
-
-/*----------------------------------------------------------------------------*/
-
-
-void generateQPosOnes_QtrPosOnes(POSITION_T QPosOnes[N0][M],
-                                 POSITION_T QtrPosOnes[N0][M],
-                                 AES_XOF_struct *niederreiter_keys_expander)
-{
-   generateQsparse(QPosOnes, niederreiter_keys_expander);
-   unsigned transposed_ones_idx[N0] = {0x00};
-   for(unsigned i=0; i < N0 ; i++) {
-      int currQoneIdx = 0; // position in the column of QtrPosOnes[][...]
-      int endQblockIdx = 0;
-      for (int blockIdx = 0; blockIdx < N0; blockIdx++) {
-         endQblockIdx += qBlockWeights[i][blockIdx];
-         for (; currQoneIdx < endQblockIdx; currQoneIdx++) {
-            QtrPosOnes[blockIdx][transposed_ones_idx[blockIdx]] = (P -
-                  QPosOnes[i][currQoneIdx]) % P;
-            transposed_ones_idx[blockIdx]++;
-         }
-      }
-   }
-
-} // end generateQPosOnes_QtrPosOnes
-
 /*----------------------------------------------------------------------------*/

@@ -3,6 +3,7 @@
 # 'make native' to build just the static and shared libs
 # 'make test' to build the test suite
 # 'make android' to build static library for Android apps
+# 'make ios' to build static library for iOS apps
 # 'sudo make install' to install everything you built.
 
 
@@ -22,10 +23,13 @@ OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c)) $(OBJDIR)/rng.o
 CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 #CFLAGS += -O0 -g -Wall -fPIC -Icommon
 
-
 # Some cipher-specific options
 sikep503_SOURCES = crypto/sikep503/P503.c crypto/sikep503/generic/fp_generic.c crypto/sikep503/sha3/fips202.c scripts/aux_api.c
-sikep503_DEFINES = -D _OPTIMIZED_GENERIC_ -D _AMD64_ -D __LINUX__
+sikep503_DEFINES = -D _OPTIMIZED_GENERIC_ -D __LINUX__ 
+#sikep503_SOURCES+= crypto/sikep503/ARM64/fp_arm64.c crypto/sikep503/ARM64/fp_arm64_asm.S
+#sikep503_DEFINES+= -D _ARM64_
+sikep503_SOURCES+= crypto/sikep503/AMD64/fp_x64.c crypto/sikep503/AMD64/fp_x64_asm.S
+sikep503_DEFINES+= -D _AMD64_
 ledakem128sln02_DEFINES = -DCATEGORY=1 -DN0=2
 
 
@@ -56,9 +60,34 @@ export UNAME=Linux
 $(TOOLCHAIN):
 	$(ANDROID_SDK)/ndk-bundle/build/tools/make_standalone_toolchain.py --arch arm64 --api 26 --install-dir=$(TOOLCHAIN)
 
+# iOS
+else ifeq ($(findstring ios,$(MAKECMDGOALS)),ios)
+BUILDDIR:=build/ios
+TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
+export AR=$(TOOLCHAIN)/ar
+export AS=$(TOOLCHAIN)/as
+export CC=$(TOOLCHAIN)/clang
+export CXX=$(TOOLCHAIN)/clang++
+export LD=$(TOOLCHAIN)/ld
+export NM=$(TOOLCHAIN)/nm
+export OBJCOPY=objcopy
+export RANLIB=$(TOOLCHAIN)/ranlib
+export LIBTOOL=$(TOOLCHAIN)/libtool
+
+ifeq ($(MAKECMDGOALS),ios_arm64)
+export ARCH=arm64
+XCODE_SDK:=iphoneos
+else
+export ARCH=x86_64
+XCODE_SDK:=iphonesimulator
+endif
+CFLAGS+= -std=gnu99 -arch $(ARCH) -miphoneos-version-min=9.0 -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) 
+BUILDDIR:=$(BUILDDIR)/$(ARCH)
+
 # Native builds
 else
 BUILDDIR:=build/native
+export LD=ld
 export NM=nm
 export OBJCOPY=objcopy
 export RANLIB=ranlib
@@ -91,6 +120,13 @@ endif
 native : $(SHAREDLIB) $(STATICLIB)
 
 android: $(TOOLCHAIN) $(STATICLIB)
+
+ios: 
+	echo lipo -create build/ios/arm64/libnistpqc.a build/ios/x86_64/libnistpqc.a -output build/ios/libnistpqc.a
+
+ios_arm64: $(STATICLIB)
+
+ios_x86_64: $(STATICLIB)
 
 # Shared library (libnistpqc.dylib or libnistpqc.so)
 $(SHAREDLIB) : $(ARCHIVES) $(OBJECTS)
@@ -129,7 +165,10 @@ $(1)_OBJDIR=$(OBJDIR)/$(1)
 ifndef $(1)_SOURCES
 $(1)_SOURCES=$(wildcard crypto/$(1)/*.c) scripts/aux_api.c
 endif
-$(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES))
+#$(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES)) 
+$(1)_OBJS_C = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$(filter %.c, $$($(1)_SOURCES)))
+$(1)_OBJS_S = $$(patsubst %.S,$$($(1)_OBJDIR)/%.o, $$(filter %.S, $$($(1)_SOURCES)))
+$(1)_OBJS = $$($(1)_OBJS_C) $$($(1)_OBJS_S)
 
 $$($(1)_ARCHIVE) : $$($(1)_OBJS)
 ifeq ($(UNAME),Linux)
@@ -140,9 +179,13 @@ else ifeq ($(UNAME),Darwin)
 endif
 	bash scripts/update_library.sh $(1) $$@
 
-$$($(1)_OBJS) : $$($(1)_OBJDIR)/%.o : %.c
+$$($(1)_OBJS_C) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
 	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -Icrypto/$(1) -c -o $$@ $$<
+
+$$($(1)_OBJS_S) : $$($(1)_OBJDIR)/%.o : %.S
+	@mkdir -p $$(dir $$@)
+	$$(CC) $$(CFLAGS) -D__ASM_UNDER__ -E $$^ | $$(AS) -O3 -o $$@
 
 endef
 

@@ -2,9 +2,9 @@
  *
  * <kem.c>
  *
- * @version 1.0 (September 2017)
+ * @version 2.0 (March 2019)
  *
- * Reference ISO-C99 Implementation of LEDAkem cipher" using GCC built-ins.
+ * Reference ISO-C11 Implementation of the LEDAcrypt KEM cipher using GCC built-ins.
  *
  * In alphabetical order:
  *
@@ -85,25 +85,16 @@ int crypto_kem_dec( unsigned char *ss,
                     const unsigned char *ct,
                     const unsigned char *sk )
 {
-
-
    DIGIT decoded_error_vector[N0*NUM_DIGITS_GF2X_ELEMENT];
-   DIGIT mockup_error_vector[N0*NUM_DIGITS_GF2X_ELEMENT];
-   memcpy(mockup_error_vector, ct, NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B);
 
    int decode_ok = decrypt_niederreiter(decoded_error_vector,
                                         (privateKeyNiederreiter_t *)sk,
                                         (DIGIT *)ct);
+   HASH_FUNCTION((const unsigned char *) decoded_error_vector,
+                    (N0*NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B),
+                    ss);
    if (decode_ok == 1) {
-      HASH_FUNCTION((const unsigned char *) decoded_error_vector,
-                    (N0*NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B),
-                    ss);
       return 0;
-   } else { /*Here due to constant time execution and IND-CCA requirements */
-      HASH_FUNCTION((const unsigned char *) mockup_error_vector,
-                    (N0*NUM_DIGITS_GF2X_ELEMENT*DIGIT_SIZE_B),
-                    ss);
-      return 1;
    }
    return 1;
 }

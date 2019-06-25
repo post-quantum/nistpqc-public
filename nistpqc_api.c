@@ -4,7 +4,7 @@
 
 DECLARE_CIPHER_EXPORTS(newhope512cca)   /* NewHope 512 CCA-KEM */
 DECLARE_CIPHER_EXPORTS(kyber512)        /* Kyber 512 */
-DECLARE_CIPHER_EXPORTS(ntrulpr4591761)  /* NTRU LPrime 4591^761 */
+DECLARE_CIPHER_EXPORTS(ntrulpr761)  /* NTRU LPrime 761 */
 DECLARE_CIPHER_EXPORTS(ntrukem443)      /* NTRU KEM 443 */
 DECLARE_CIPHER_EXPORTS(sikep503)        /* SIKEp503 */
 DECLARE_CIPHER_EXPORTS(ledakem128sln02) /* LEDAkem SL128 N0=2 */
@@ -19,8 +19,8 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
         case NISTPQC_CIPHER_KYBER512:
             INIT_CIPHER_INTERFACE(kyber512);
             break;
-        case NISTPQC_CIPHER_NTRULPR4591761:
-            INIT_CIPHER_INTERFACE(ntrulpr4591761);
+        case NISTPQC_CIPHER_NTRULPR761:
+            INIT_CIPHER_INTERFACE(ntrulpr761);
             break;
         case NISTPQC_CIPHER_NTRUKEM443:
             INIT_CIPHER_INTERFACE(ntrukem443);
