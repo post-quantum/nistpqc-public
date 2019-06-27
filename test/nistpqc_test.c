@@ -4,9 +4,15 @@
  * Included ciphers:
  *   - NewHope 512 CCA
  *   - Kyber 512
- *   - NTRU LPrime 4591^761
+ *   - NTRU LPrime 761
  *   - NTRU KEM 443
+ *   - SIKE p434
  *   - SIKE p503
+ *   - SIKE p610
+ *   - SIKE p751
+ *   - LAC128
+ *   - LAC192
+ *   - LAC256
  *   - LEDAkem SL=128 N=02
  **/
 

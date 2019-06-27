@@ -4,9 +4,15 @@
 
 DECLARE_CIPHER_EXPORTS(newhope512cca)   /* NewHope 512 CCA-KEM */
 DECLARE_CIPHER_EXPORTS(kyber512)        /* Kyber 512 */
-DECLARE_CIPHER_EXPORTS(ntrulpr761)  /* NTRU LPrime 761 */
+DECLARE_CIPHER_EXPORTS(ntrulpr761)      /* NTRU LPrime 761 */
 DECLARE_CIPHER_EXPORTS(ntrukem443)      /* NTRU KEM 443 */
+DECLARE_CIPHER_EXPORTS(sikep434)        /* SIKEp434 */
 DECLARE_CIPHER_EXPORTS(sikep503)        /* SIKEp503 */
+DECLARE_CIPHER_EXPORTS(sikep610)        /* SIKEp610 */
+DECLARE_CIPHER_EXPORTS(sikep751)        /* SIKEp751 */
+DECLARE_CIPHER_EXPORTS(lac128)          /* LAC128 */
+DECLARE_CIPHER_EXPORTS(lac192)          /* LAC192 */
+DECLARE_CIPHER_EXPORTS(lac256)          /* LAC256 */
 DECLARE_CIPHER_EXPORTS(ledakem128sln02) /* LEDAkem SL128 N0=2 */
 
 int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
@@ -25,8 +31,26 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
         case NISTPQC_CIPHER_NTRUKEM443:
             INIT_CIPHER_INTERFACE(ntrukem443);
             break;
+        case NISTPQC_CIPHER_SIKEP434:
+            INIT_CIPHER_INTERFACE(sikep434);
+            break;
         case NISTPQC_CIPHER_SIKEP503:
             INIT_CIPHER_INTERFACE(sikep503);
+            break;
+        case NISTPQC_CIPHER_SIKEP610:
+            INIT_CIPHER_INTERFACE(sikep610);
+            break;
+        case NISTPQC_CIPHER_SIKEP751:
+            INIT_CIPHER_INTERFACE(sikep751);
+            break;
+        case NISTPQC_CIPHER_LAC128:
+            INIT_CIPHER_INTERFACE(lac128);
+            break;
+        case NISTPQC_CIPHER_LAC192:
+            INIT_CIPHER_INTERFACE(lac192);
+            break;
+        case NISTPQC_CIPHER_LAC256:
+            INIT_CIPHER_INTERFACE(lac256);
             break;
          case NISTPQC_CIPHER_LEDAKEM128SLN02:
             INIT_CIPHER_INTERFACE(ledakem128sln02);
