@@ -32,7 +32,9 @@ sikep610_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__
 sikep610_SOURCES = crypto/sikep610/P610/P610.c crypto/sikep610/P610/generic/fp_generic.c crypto/sikep610/sha3/fips202.c scripts/aux_api.c
 sikep751_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
 sikep751_SOURCES = crypto/sikep751/P751/P751.c crypto/sikep751/P751/generic/fp_generic.c crypto/sikep751/sha3/fips202.c scripts/aux_api.c
-ledakem128sln02_DEFINES = -DCATEGORY=1 -DN0=2
+ledakem128n3_DEFINES = -DCATEGORY=1 -DN0=3
+ledakem192n3_DEFINES = -DCATEGORY=3 -DN0=3
+ledakem256n2_DEFINES = -DCATEGORY=5 -DN0=2
 
 
 # If building for Android then we use a special 'standalone' toolchain rather than the system one for

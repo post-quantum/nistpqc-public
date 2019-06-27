@@ -13,7 +13,9 @@ DECLARE_CIPHER_EXPORTS(sikep751)        /* SIKEp751 */
 DECLARE_CIPHER_EXPORTS(lac128)          /* LAC128 */
 DECLARE_CIPHER_EXPORTS(lac192)          /* LAC192 */
 DECLARE_CIPHER_EXPORTS(lac256)          /* LAC256 */
-DECLARE_CIPHER_EXPORTS(ledakem128sln02) /* LEDAkem SL128 N0=2 */
+DECLARE_CIPHER_EXPORTS(ledakem128n3)    /* LEDAkem 128 n_0=3 */
+DECLARE_CIPHER_EXPORTS(ledakem192n3)    /* LEDAkem 192 n_0=3 */
+DECLARE_CIPHER_EXPORTS(ledakem256n2)    /* LEDAkem 256 n_0=2 */
 
 int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
 {
@@ -52,8 +54,14 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
         case NISTPQC_CIPHER_LAC256:
             INIT_CIPHER_INTERFACE(lac256);
             break;
-         case NISTPQC_CIPHER_LEDAKEM128SLN02:
-            INIT_CIPHER_INTERFACE(ledakem128sln02);
+         case NISTPQC_CIPHER_LEDAKEM128N3:
+            INIT_CIPHER_INTERFACE(ledakem128n3);
+            break;
+         case NISTPQC_CIPHER_LEDAKEM192N3:
+            INIT_CIPHER_INTERFACE(ledakem192n3);
+            break;
+         case NISTPQC_CIPHER_LEDAKEM256N2:
+            INIT_CIPHER_INTERFACE(ledakem256n2);
             break;
         default:
             nistpqc->keypair = NULL;
