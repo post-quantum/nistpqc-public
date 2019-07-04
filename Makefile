@@ -24,6 +24,8 @@ CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 #CFLAGS += -O0 -g -Wall -fPIC -Icommon
 
 # Some cipher-specific options
+lightsaber_DEFINES = -DSABER_TYPE=LightSaber
+lightsaber_SOURCES = crypto/lightsaber/cbd.c crypto/lightsaber/fips202.c crypto/lightsaber/kem.c crypto/lightsaber/pack_unpack.c crypto/lightsaber/poly.c crypto/lightsaber/SABER_indcpa.c crypto/lightsaber/verify.c
 sikep434_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
 sikep434_SOURCES = crypto/sikep434/P434/P434.c crypto/sikep434/P434/generic/fp_generic.c crypto/sikep434/sha3/fips202.c scripts/aux_api.c
 sikep503_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
