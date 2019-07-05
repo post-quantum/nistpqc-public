@@ -25,7 +25,11 @@ CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 
 # Some cipher-specific options
 lightsaber_DEFINES = -DSABER_TYPE=LightSaber
-lightsaber_SOURCES = crypto/lightsaber/cbd.c crypto/lightsaber/fips202.c crypto/lightsaber/kem.c crypto/lightsaber/pack_unpack.c crypto/lightsaber/poly.c crypto/lightsaber/SABER_indcpa.c crypto/lightsaber/verify.c
+lightsaber_SOURCES = crypto/lightsaber/cbd.c crypto/lightsaber/fips202.c crypto/lightsaber/kem.c crypto/lightsaber/pack_unpack.c crypto/lightsaber/poly.c crypto/lightsaber/SABER_indcpa.c crypto/lightsaber/verify.c scripts/aux_api.c
+saber_DEFINES = -DSABER_TYPE=Saber
+saber_SOURCES = crypto/saber/cbd.c crypto/saber/fips202.c crypto/saber/kem.c crypto/saber/pack_unpack.c crypto/saber/poly.c crypto/saber/SABER_indcpa.c crypto/saber/verify.c scripts/aux_api.c
+firesaber_DEFINES = -DSABER_TYPE=FireSaber
+firesaber_SOURCES = crypto/firesaber/cbd.c crypto/firesaber/fips202.c crypto/firesaber/kem.c crypto/firesaber/pack_unpack.c crypto/firesaber/poly.c crypto/firesaber/SABER_indcpa.c crypto/firesaber/verify.c scripts/aux_api.c
 sikep434_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
 sikep434_SOURCES = crypto/sikep434/P434/P434.c crypto/sikep434/P434/generic/fp_generic.c crypto/sikep434/sha3/fips202.c scripts/aux_api.c
 sikep503_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 

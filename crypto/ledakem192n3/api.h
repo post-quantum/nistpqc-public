@@ -36,7 +36,7 @@
 #include "gf2x_limbs.h"
 #include "gf2x_arith_mod_xPplusOne.h"
 
-#define CRYPTO_ALGNAME "LEDA"
+#define CRYPTO_ALGNAME "LEDAKEM192"
 
 /* required bytes of input randomness */
 #define  CRYPTO_RANDOMBYTES TRNG_BYTE_LENGTH

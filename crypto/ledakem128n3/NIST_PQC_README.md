@@ -6,4 +6,5 @@ The version of LEDAkem (NIST category 1, n_0=3) used here is from the [optimized
 
 - Flattened directory structure, no `bin`, `include` or `library` directories
 - Removed `Makefile`
-- Used `sha3.c|h` from Round 1 to avoid external lib dependency.
+- Used `sha3.c|h` from Round 1 to avoid external lib dependency
+- Replace LEDA with LEDAKEM128 in `api.h`

@@ -10,6 +10,8 @@ DECLARE_CIPHER_EXPORTS(lac128)          /* LAC128 */
 DECLARE_CIPHER_EXPORTS(lac192)          /* LAC192 */
 DECLARE_CIPHER_EXPORTS(lac256)          /* LAC256 */
 DECLARE_CIPHER_EXPORTS(lightsaber)      /* LightSaber */
+DECLARE_CIPHER_EXPORTS(saber)           /* Saber */
+DECLARE_CIPHER_EXPORTS(firesaber)       /* FireSaber */
 DECLARE_CIPHER_EXPORTS(sikep434)        /* SIKEp434 */
 DECLARE_CIPHER_EXPORTS(sikep503)        /* SIKEp503 */
 DECLARE_CIPHER_EXPORTS(sikep610)        /* SIKEp610 */
@@ -45,6 +47,12 @@ int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
             break;
 	case NISTPQC_CIPHER_LIGHTSABER:
             INIT_CIPHER_INTERFACE(lightsaber);
+            break;
+        case NISTPQC_CIPHER_SABER:
+            INIT_CIPHER_INTERFACE(saber);
+            break;
+        case NISTPQC_CIPHER_FIRESABER:
+            INIT_CIPHER_INTERFACE(firesaber);
             break;
         case NISTPQC_CIPHER_SIKEP434:
             INIT_CIPHER_INTERFACE(sikep434);
