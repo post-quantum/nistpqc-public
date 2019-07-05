@@ -4,10 +4,18 @@
  * Included ciphers:
  *   - NewHope 512 CCA
  *   - Kyber 512
- *   - NTRU LPrime 4591^761
+ *   - NTRU LPrime 761
  *   - NTRU KEM 443
+ *   - SIKE p434
  *   - SIKE p503
- *   - LEDAkem SL=128 N=02
+ *   - SIKE p610
+ *   - SIKE p751
+ *   - LAC128
+ *   - LAC192
+ *   - LAC256
+ *   - LEDAkem 128 n_0=3
+ *   - LEDAkem 192 n_0=3
+ *   - LEDAkem 256 n_0=2
  **/
 
 #include <stdio.h>
@@ -17,7 +25,7 @@
 #include "nistpqc_api.h"
 
 #define FIRST_PQC_CIPHER    NISTPQC_CIPHER_NEWHOPE512CCA
-#define LAST_PQC_CIPHER     NISTPQC_CIPHER_LEDAKEM128SLN02
+#define LAST_PQC_CIPHER     NISTPQC_CIPHER_LEDAKEM256N2
 #define TEST_RUN            100
 #define BENCHMARK_RUN       100
 #define PASSED              1
