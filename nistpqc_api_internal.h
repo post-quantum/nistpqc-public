@@ -9,7 +9,8 @@
   extern size_t x##_crypto_get_ciphertext_size(void); \
   extern size_t x##_crypto_get_public_key_size(void); \
   extern size_t x##_crypto_get_private_key_size(void); \
-  extern const char* x##_crypto_get_algorithm_name(void);
+  extern const char* x##_crypto_get_algorithm_name(void); \
+  extern int x##_crypto_public_key_from_private_key(uint8_t*, const uint8_t*);
 
 #define INIT_CIPHER_INTERFACE(x) \
     nistpqc->keypair = &x##_crypto_kem_keypair; \
@@ -19,4 +20,5 @@
     nistpqc->ciphertext_size = &x##_crypto_get_ciphertext_size; \
     nistpqc->public_key_size = &x##_crypto_get_public_key_size; \
     nistpqc->private_key_size = &x##_crypto_get_private_key_size; \
-    nistpqc->algorithm_name = &x##_crypto_get_algorithm_name;
+    nistpqc->algorithm_name = &x##_crypto_get_algorithm_name; \
+    nistpqc->public_key_from_private_key = &x##_crypto_public_key_from_private_key;

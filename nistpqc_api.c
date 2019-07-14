@@ -22,6 +22,7 @@ DECLARE_CIPHER_EXPORTS(ledakem256n2)    /* LEDAkem 256 n_0=2 */
 
 int nistpqc_init(nistpqc_t *nistpqc, nistpqc_cipher_t cipher)
 {
+    nistpqc->public_key_from_private_key = NULL;
     switch (cipher)
     {
         case NISTPQC_CIPHER_NEWHOPE512CCA:

@@ -49,7 +49,7 @@
 /*              start PSEUDO-RAND GENERATOR ROUTINES for rnd.h                */
 /*----------------------------------------------------------------------------*/
 
-
+#if 0
 void initialize_pseudo_random_generator_seed(int ac, char *av[])
 {
 
@@ -68,7 +68,7 @@ void initialize_pseudo_random_generator_seed(int ac, char *av[])
 
 
 } // end initilize_pseudo_random_sequence_seed
-
+#endif
 
 /*----------------------------------------------------------------------------*/
 
@@ -187,6 +187,7 @@ AES256_ECB(unsigned char *key, unsigned char *ptx, unsigned char *ctx)
    rijndaelEncrypt(round_key, NROUNDS, ptx, ctx);
 }
 
+#if 0
 void
 randombytes_init(unsigned char *entropy_input,
                  unsigned char *personalization_string,
@@ -235,6 +236,7 @@ randombytes(unsigned char *x, unsigned long long xlen)
 
    return RNG_SUCCESS;
 }
+#endif
 
 void
 AES256_CTR_DRBG_Update(unsigned char *provided_data,

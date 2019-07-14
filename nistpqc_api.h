@@ -115,6 +115,17 @@ struct nistpqc_t {
      * @return The name of the PQ algorithm
      **/
     const char* (*algorithm_name)(void);
+
+    /**
+     * Function pointer to obtain the public-key from a 
+     * private-key.
+     *
+     * @param pk  Pointer to the output public-key buffer
+     * @param sk  Pointer to the input private-key buffer
+     * @return 0 on success, non-zero otherwise
+     **/
+    int (*public_key_from_private_key)(uint8_t *pk,
+                                       const uint8_t *sk);
 };
 
 typedef struct nistpqc_t nistpqc_t;

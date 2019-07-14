@@ -25,19 +25,19 @@ CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 
 # Some cipher-specific options
 lightsaber_DEFINES = -DSABER_TYPE=LightSaber
-lightsaber_SOURCES = crypto/lightsaber/cbd.c crypto/lightsaber/fips202.c crypto/lightsaber/kem.c crypto/lightsaber/pack_unpack.c crypto/lightsaber/poly.c crypto/lightsaber/SABER_indcpa.c crypto/lightsaber/verify.c scripts/aux_api.c
+lightsaber_SOURCES = crypto/lightsaber/cbd.c crypto/lightsaber/fips202.c crypto/lightsaber/kem.c crypto/lightsaber/pack_unpack.c crypto/lightsaber/poly.c crypto/lightsaber/SABER_indcpa.c crypto/lightsaber/verify.c crypto/lightsaber/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 saber_DEFINES = -DSABER_TYPE=Saber
-saber_SOURCES = crypto/saber/cbd.c crypto/saber/fips202.c crypto/saber/kem.c crypto/saber/pack_unpack.c crypto/saber/poly.c crypto/saber/SABER_indcpa.c crypto/saber/verify.c scripts/aux_api.c
+saber_SOURCES = crypto/saber/cbd.c crypto/saber/fips202.c crypto/saber/kem.c crypto/saber/pack_unpack.c crypto/saber/poly.c crypto/saber/SABER_indcpa.c crypto/saber/verify.c crypto/lightsaber/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 firesaber_DEFINES = -DSABER_TYPE=FireSaber
-firesaber_SOURCES = crypto/firesaber/cbd.c crypto/firesaber/fips202.c crypto/firesaber/kem.c crypto/firesaber/pack_unpack.c crypto/firesaber/poly.c crypto/firesaber/SABER_indcpa.c crypto/firesaber/verify.c scripts/aux_api.c
+firesaber_SOURCES = crypto/firesaber/cbd.c crypto/firesaber/fips202.c crypto/firesaber/kem.c crypto/firesaber/pack_unpack.c crypto/firesaber/poly.c crypto/firesaber/SABER_indcpa.c crypto/firesaber/verify.c crypto/lightsaber/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 sikep434_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep434_SOURCES = crypto/sikep434/P434/P434.c crypto/sikep434/P434/generic/fp_generic.c crypto/sikep434/sha3/fips202.c scripts/aux_api.c
+sikep434_SOURCES = crypto/sikep434/P434/P434.c crypto/sikep434/P434/generic/fp_generic.c crypto/sikep434/sha3/fips202.c crypto/sikep434/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 sikep503_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep503_SOURCES = crypto/sikep503/P503/P503.c crypto/sikep503/P503/generic/fp_generic.c crypto/sikep503/sha3/fips202.c scripts/aux_api.c
+sikep503_SOURCES = crypto/sikep503/P503/P503.c crypto/sikep503/P503/generic/fp_generic.c crypto/sikep503/sha3/fips202.c crypto/sikep503/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 sikep610_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep610_SOURCES = crypto/sikep610/P610/P610.c crypto/sikep610/P610/generic/fp_generic.c crypto/sikep610/sha3/fips202.c scripts/aux_api.c
+sikep610_SOURCES = crypto/sikep610/P610/P610.c crypto/sikep610/P610/generic/fp_generic.c crypto/sikep610/sha3/fips202.c crypto/sikep610/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 sikep751_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep751_SOURCES = crypto/sikep751/P751/P751.c crypto/sikep751/P751/generic/fp_generic.c crypto/sikep751/sha3/fips202.c scripts/aux_api.c
+sikep751_SOURCES = crypto/sikep751/P751/P751.c crypto/sikep751/P751/generic/fp_generic.c crypto/sikep751/sha3/fips202.c crypto/sikep751/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
 ledakem128n3_DEFINES = -DCATEGORY=1 -DN0=3
 ledakem192n3_DEFINES = -DCATEGORY=3 -DN0=3
 ledakem256n2_DEFINES = -DCATEGORY=5 -DN0=2
@@ -173,7 +173,7 @@ define build_archive
 $(1)_ARCHIVE=$(BUILDDIR)/lib$(1).a
 $(1)_OBJDIR=$(OBJDIR)/$(1)
 ifndef $(1)_SOURCES
-$(1)_SOURCES=$(wildcard crypto/$(1)/*.c) scripts/aux_api.c
+$(1)_SOURCES=$(wildcard crypto/$(1)/*.c) scripts/aux_api.c scripts/defunc_pk_from_sk.c
 endif
 #$(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES)) 
 $(1)_OBJS_C = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$(filter %.c, $$($(1)_SOURCES)))
