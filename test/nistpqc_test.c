@@ -2,17 +2,27 @@
  * NIST PQC test suites
  *
  * Included ciphers:
- *   - NewHope 512 CCA
- *   - Kyber 512
- *   - NTRU LPrime 761
- *   - NTRU KEM 443
  *   - SIKE p434
  *   - SIKE p503
  *   - SIKE p610
  *   - SIKE p751
+ *   - Kyber 512
+ *   - Kyber 768
+ *   - Kyber 1024
  *   - LAC128
  *   - LAC192
  *   - LAC256
+ *   - NewHope 512 CCA
+ *   - NewHope 1024 CCA
+ *   - Frodokem 640
+ *   - Frodokem 976
+ *   - Frodokem 1344
+ *   - NTRU LPrime 653
+ *   - NTRU LPrime 761
+ *   - NTRU LPrime 857
+ *   - Streamlined NTRU Prime 653
+ *   - Streamlined NTRU Prime 761
+ *   - Streamlined NTRU Prime 857
  *   - LEDAkem 128 n_0=3
  *   - LEDAkem 192 n_0=3
  *   - LEDAkem 256 n_0=2
@@ -24,7 +34,7 @@
 #include <string.h>
 #include "nistpqc_api.h"
 
-#define FIRST_PQC_CIPHER    NISTPQC_CIPHER_NEWHOPE512CCA
+#define FIRST_PQC_CIPHER    NISTPQC_CIPHER_SIKEP434
 #define LAST_PQC_CIPHER     NISTPQC_CIPHER_LEDAKEM256N2
 #define TEST_RUN            100
 #define BENCHMARK_RUN       100

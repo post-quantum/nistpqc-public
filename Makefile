@@ -24,24 +24,20 @@ CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
 #CFLAGS += -O0 -g -Wall -fPIC -Icommon
 
 # Some cipher-specific options
-lightsaber_DEFINES = -DSABER_TYPE=LightSaber
-lightsaber_SOURCES = crypto/lightsaber/cbd.c crypto/lightsaber/fips202.c crypto/lightsaber/kem.c crypto/lightsaber/pack_unpack.c crypto/lightsaber/poly.c crypto/lightsaber/SABER_indcpa.c crypto/lightsaber/verify.c crypto/lightsaber/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-saber_DEFINES = -DSABER_TYPE=Saber
-saber_SOURCES = crypto/saber/cbd.c crypto/saber/fips202.c crypto/saber/kem.c crypto/saber/pack_unpack.c crypto/saber/poly.c crypto/saber/SABER_indcpa.c crypto/saber/verify.c crypto/lightsaber/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-firesaber_DEFINES = -DSABER_TYPE=FireSaber
-firesaber_SOURCES = crypto/firesaber/cbd.c crypto/firesaber/fips202.c crypto/firesaber/kem.c crypto/firesaber/pack_unpack.c crypto/firesaber/poly.c crypto/firesaber/SABER_indcpa.c crypto/firesaber/verify.c crypto/lightsaber/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-sikep434_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep434_SOURCES = crypto/sikep434/P434/P434.c crypto/sikep434/P434/generic/fp_generic.c crypto/sikep434/sha3/fips202.c crypto/sikep434/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-sikep503_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep503_SOURCES = crypto/sikep503/P503/P503.c crypto/sikep503/P503/generic/fp_generic.c crypto/sikep503/sha3/fips202.c crypto/sikep503/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-sikep610_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep610_SOURCES = crypto/sikep610/P610/P610.c crypto/sikep610/P610/generic/fp_generic.c crypto/sikep610/sha3/fips202.c crypto/sikep610/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-sikep751_DEFINES = -D _AMD64_ -D _GENERIC_ -D __LINUX__ 
-sikep751_SOURCES = crypto/sikep751/P751/P751.c crypto/sikep751/P751/generic/fp_generic.c crypto/sikep751/sha3/fips202.c crypto/sikep751/pk_from_sk.c scripts/aux_api.c scripts/defunc_pk_from_sk.c
-ledakem128n3_DEFINES = -DCATEGORY=1 -DN0=3
-ledakem192n3_DEFINES = -DCATEGORY=3 -DN0=3
-ledakem256n2_DEFINES = -DCATEGORY=5 -DN0=2
-
+frodokem640_FLAGS  = -std=gnu11 -DNIX -D_AMD64_ -D_OPTIMIZED_GENERIC_ -D_AES128_FOR_A_ -DNO_OPENSSL
+frodokem976_FLAGS  = -std=gnu11 -DNIX -D_AMD64_ -D_OPTIMIZED_GENERIC_ -D_AES128_FOR_A_ -DNO_OPENSSL
+frodokem1344_FLAGS = -std=gnu11 -DNIX -D_AMD64_ -D_OPTIMIZED_GENERIC_ -D_AES128_FOR_A_ -DNO_OPENSSL
+saber_FLAGS = -DSABER_TYPE=Saber -Wno-format
+firesaber_FLAGS = -DSABER_TYPE=FireSaber -Wno-format
+lightsaber_FLAGS = -DSABER_TYPE=LightSaber -Wno-format
+sikep434_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
+sikep503_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
+sikep610_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
+sikep751_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
+ledakem128n3_FLAGS = -DCATEGORY=1 -DN0=3
+ledakem192n3_FLAGS = -DCATEGORY=3 -DN0=3
+ledakem256n2_FLAGS = -DCATEGORY=5 -DN0=2
+r5nd1kem5d_FLAGS=-DUSE_OPENSSL_SHAKE
 
 # If building for Android then we use a special 'standalone' toolchain rather than the system one for
 # native builds. The Android NDK will build this toolchain for us
@@ -105,7 +101,6 @@ LIBTOOL=libtool
 endif
 
 ifeq ($(UNAME),Darwin)
-CFLAGS += -I$(PREFIX)/include
 LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
 LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
 LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
@@ -172,10 +167,12 @@ $(OBJDIR)/rng.o : common/rng.c | makedir
 define build_archive
 $(1)_ARCHIVE=$(BUILDDIR)/lib$(1).a
 $(1)_OBJDIR=$(OBJDIR)/$(1)
-ifndef $(1)_SOURCES
-$(1)_SOURCES=$(wildcard crypto/$(1)/*.c) scripts/aux_api.c scripts/defunc_pk_from_sk.c
+ifneq (,$$(wildcard crypto/$(1)/SOURCES))
+$(1)_SOURCES=$$(patsubst %,crypto/$(1)/%,$$(shell cat crypto/$(1)/SOURCES))
+else
+$(1)_SOURCES=$$(wildcard crypto/$(1)/*.c)
 endif
-#$(1)_OBJS = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$($(1)_SOURCES)) 
+$(1)_SOURCES+= scripts/aux_api.c scripts/defunc_pk_from_sk.c
 $(1)_OBJS_C = $$(patsubst %.c,$$($(1)_OBJDIR)/%.o, $$(filter %.c, $$($(1)_SOURCES)))
 $(1)_OBJS_S = $$(patsubst %.S,$$($(1)_OBJDIR)/%.o, $$(filter %.S, $$($(1)_SOURCES)))
 $(1)_OBJS = $$($(1)_OBJS_C) $$($(1)_OBJS_S)
@@ -191,7 +188,7 @@ endif
 
 $$($(1)_OBJS_C) : $$($(1)_OBJDIR)/%.o : %.c
 	@mkdir -p $$(dir $$@)
-	$$(CC) $$(CFLAGS) $$($(1)_DEFINES) -Icrypto/$(1) -c -o $$@ $$<
+	$$(CC) $$(CFLAGS) $$($(1)_FLAGS) -Icrypto/$(1) -c -o $$@ $$<
 
 $$($(1)_OBJS_S) : $$($(1)_OBJDIR)/%.o : %.S
 	@mkdir -p $$(dir $$@)
