@@ -13,3 +13,4 @@ The version of LEDAkem (NIST category 3, n_0=3) used here is from the [optimized
 - Removed `Makefile`
 - Used `sha3.c|h` from Round 1 to avoid external lib dependency
 - Replace LEDA with LEDAKEM192 in `api.h`
+- Added `pk_from_sk.c`

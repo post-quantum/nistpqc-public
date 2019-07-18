@@ -37,7 +37,6 @@ sikep751_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
 ledakem128n3_FLAGS = -DCATEGORY=1 -DN0=3
 ledakem192n3_FLAGS = -DCATEGORY=3 -DN0=3
 ledakem256n2_FLAGS = -DCATEGORY=5 -DN0=2
-r5nd1kem5d_FLAGS=-DUSE_OPENSSL_SHAKE
 
 # If building for Android then we use a special 'standalone' toolchain rather than the system one for
 # native builds. The Android NDK will build this toolchain for us

@@ -3,4 +3,4 @@ util.c
 aes/aes.c 
 sha3/fips202.c 
 aes/aes_c.c
-
+pk_from_sk.c

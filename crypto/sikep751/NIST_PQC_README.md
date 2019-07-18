@@ -9,4 +9,5 @@ The version of SIKE p751 used here is from the second round [optimized implement
 - Removed `Makefile`
 - Removed `tests` directory
 - Moved `P751/api.h` to the root directory
-
+- Added `pk_from_sk.c`
+- Added `SOURCES` file
