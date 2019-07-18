@@ -14,3 +14,4 @@ The version of LAC-192 used here is from the [optimized implementation](https://
 - Removed `test_cpucycles.c`
 - Removed `test_speed.h`
 - Removed `test_speed.c`
+- Added `pk_from_sk.c`

@@ -8,3 +8,5 @@ The version of Light Saber used here is from the [optimized implementation](http
 - Removed `cpucycles.[h,c]`
 - Removed `Makefile`
 - Removed `test` directory
+- Added `pk_from_sk.c`
+- Added `SOURCES` file

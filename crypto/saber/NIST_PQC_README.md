@@ -8,3 +8,5 @@ The version of Saber used here is from the [optimized implementation](https://cs
 - Removed `cpucycles.[h,c]`
 - Removed `Makefile`
 - Removed `test` directory
+- Added `pk_from_sk.c`
+- Added `SOURCES` file

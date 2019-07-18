@@ -8,3 +8,5 @@ The version of Fire Saber used here is from the [optimized implementation](https
 - Removed `cpucycles.[h,c]`
 - Removed `Makefile`
 - Removed `test` directory
+- Added `pk_from_sk.c`
+- Added `SOURCES` file
