@@ -3,7 +3,7 @@
 #include "poly.h"
 
 /* n^-1 modulo q */
-#define INV_N_MOD_Q         1325
+#define INV_N_MOD_Q         2197
 
 int crypto_public_key_from_private_key(unsigned char* pk,
                                        const unsigned char* sk)
