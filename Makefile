@@ -1,4 +1,4 @@
-#
+
 # 'make' to build the native static library, shared library
 # 'make native' to build just the static and shared libs
 # 'make test' to build the test suite
@@ -10,7 +10,7 @@
 default: native
 
 LIBNAME = nistpqc
-VERSION = 0.2
+VERSION = 0.3
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
 endif
@@ -21,7 +21,6 @@ STATICLIB = $(BUILDDIR)/lib$(LIBNAME).a
 ARCHIVES = $(foreach dir,$(DIRS),$(BUILDDIR)/lib$(dir).a)
 OBJECTS = $(patsubst %.c,$(OBJDIR)/%.o,$(wildcard *.c)) $(OBJDIR)/rng.o
 CFLAGS += -O3 -Wall -fPIC -fomit-frame-pointer -Icommon
-#CFLAGS += -O0 -g -Wall -fPIC -Icommon
 
 # Some cipher-specific options
 frodokem640_FLAGS  = -std=gnu11 -DNIX -D_AMD64_ -D_OPTIMIZED_GENERIC_ -D_AES128_FOR_A_ -DNO_OPENSSL
@@ -34,9 +33,6 @@ sikep434_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
 sikep503_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
 sikep610_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
 sikep751_FLAGS = -D _AMD64_ -D _GENERIC_ -D __LINUX__ -Wno-missing-braces
-ledakem128n3_FLAGS = -DCATEGORY=1 -DN0=3
-ledakem192n3_FLAGS = -DCATEGORY=3 -DN0=3
-ledakem256n2_FLAGS = -DCATEGORY=5 -DN0=2
 
 # If building for Android then we use a special 'standalone' toolchain rather than the system one for
 # native builds. The Android NDK will build this toolchain for us
@@ -100,6 +96,7 @@ LIBTOOL=libtool
 endif
 
 ifeq ($(UNAME),Darwin)
+OPENSSLDIR=/usr/local/opt/openssl
 LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
 LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
 LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
@@ -119,6 +116,10 @@ $(error Unsupported platform $(UNAME))
 endif
 
 
+ifneq ($(OPENSSLDIR),)
+CFLAGS += -I$(OPENSSLDIR)/include
+LDFLAGS += -L$(OPENSSLDIR)/lib
+endif
 
 
 native : $(SHAREDLIB) $(STATICLIB)
@@ -149,7 +150,7 @@ $(STATICLIB) : $(ARCHIVES) $(OBJECTS)
 ifeq ($(UNAME),Darwin)
 	$(LIBTOOL) -static -o $@ $(STATIC_INPUTS)
 else ifeq ($(UNAME),Linux)
-	echo $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
+	printf $(call make-archive,$@,$(filter %.a,$^),$(filter %.o,$^)) | $(AR) -M
 else
 	@echo "Unsupported platform $(UNAME)"
 	@exit -1
@@ -203,8 +204,11 @@ $(foreach cipher,$(DIRS),$(eval $(call build_archive,$(cipher))))
 TEST_EXE = $(BUILDDIR)/nistpqc_test
 test: $(STATICLIB) test/nistpqc_test.c
 	$(CC) $(CFLAGS) $(INCLUDE) -I. -c -o $(OBJDIR)/nistpqc_test.o test/nistpqc_test.c
+ifneq ($(OPENSSLDIR),)
+	$(CC) -o $(TEST_EXE) $(OBJDIR)/nistpqc_test.o -L$(OPENSSLDIR)/lib $(TEST_LIBS)
+else
 	$(CC) -o $(TEST_EXE) $(OBJDIR)/nistpqc_test.o $(TEST_LIBS)
-
+endif
 
 # Installation
 INSTALL = install

@@ -44,10 +44,9 @@ main(int argc, char *argv[])
     if (argc < 2) {
         fprintf(stderr, "\nUsage: %s [Cipher Number]\n\n", argv[0]);
         fprintf(stderr, "Cipher Number:\n");
-        fprintf(stderr, "  1. NewHope 512 CCA-KEM\n");
-        fprintf(stderr, "  2. Kyber 512\n");
-        fprintf(stderr, "  3. NTRU LPrime 4591^761\n");
-        fprintf(stderr, "  4. NTRU KEM 443\n");
+        fprintf(stderr, "  1. SIKE p434\n");
+        fprintf(stderr, "  2. SIKE p503\n");
+        fprintf(stderr, "  etc, see nistpqc_api.h\n");
         fprintf(stderr, "\n");
     
         return -100;

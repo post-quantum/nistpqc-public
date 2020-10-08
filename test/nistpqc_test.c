@@ -9,11 +9,6 @@
  *   - Kyber 512
  *   - Kyber 768
  *   - Kyber 1024
- *   - LAC128
- *   - LAC192
- *   - LAC256
- *   - NewHope 512 CCA
- *   - NewHope 1024 CCA
  *   - Frodokem 640
  *   - Frodokem 976
  *   - Frodokem 1344
@@ -23,9 +18,6 @@
  *   - Streamlined NTRU Prime 653
  *   - Streamlined NTRU Prime 761
  *   - Streamlined NTRU Prime 857
- *   - LEDAkem 128 n_0=3
- *   - LEDAkem 192 n_0=3
- *   - LEDAkem 256 n_0=2
  **/
 
 #include <stdio.h>
@@ -35,7 +27,7 @@
 #include "nistpqc_api.h"
 
 #define FIRST_PQC_CIPHER    NISTPQC_CIPHER_SIKEP434
-#define LAST_PQC_CIPHER     NISTPQC_CIPHER_LEDAKEM256N2
+#define LAST_PQC_CIPHER     NISTPQC_CIPHER_FIRESABER
 #define TEST_RUN            100
 #define BENCHMARK_RUN       100
 #define PASSED              1

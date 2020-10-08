@@ -12,8 +12,6 @@ The following key-establishment algorithms have been integrated into this librar
 +----------------------------+---------------+-----------------+-----------------+
 |                             Lattice-based algorithms                           |
 +----------------------------+---------------+-----------------+-----------------+
-| NewHope 512 CCA            |        1      |        928      |       1120      |
-| NewHope 1024 CCA           |        5      |       1824      |       2208      |
 | Kyber 512                  |        1      |        800      |        736      |
 | Kyber 768                  |        3      |       1184      |       1088      |
 | Kyber 1024                 |        5      |       1568      |       1568      |
@@ -27,21 +25,12 @@ The following key-establishment algorithms have been integrated into this librar
 | NTRU HPS 2048 509          |        1      |        699      |        699      |
 | NTRU HPS 2048 677          |        3      |        930      |        930      |
 | NTRU HPS 4096 821          |        5      |       1230      |       1230      |
-| LAC 128                    |        1      |        544      |        712      |
-| LAC 192                    |        3      |       1056      |       1188      |
-| LAC 256                    |        5      |       1056      |        712      |
 | LightSaber                 |        1      |        672      |        736      |
 | Saber                      |        3      |        992      |       1088      |
 | FireSaber                  |        5      |       1312      |       1472      |
 | Frodo KEM 640              |        1      |       9616      |       9720      |
 | Frodo KEM 976              |        3      |      15632      |      15744      |
 | Frodo KEM 1344             |        5      |      21520      |      21632      |
-+----------------------------+---------------+-----------------+-----------------+
-|                              Code-based algorithms                             |
-+----------------------------+---------------+-----------------+-----------------+
-| LEDAKEM 128                |        1      |       2080      |       1040      |
-| LEDAKEM 192                |        3      |       4032      |       2016      |
-| LEDAKEM 256                |        5      |       4616      |       4616      |
 +----------------------------+---------------+-----------------+-----------------+
 |                            Isogeny-based algorithms                            |
 +----------------------------+---------------+-----------------+-----------------+
@@ -58,7 +47,7 @@ Adding a new cipher is relatively easy and it generally involves the following s
 
     There are a number of candidate algorithms that share the same code-base for all proposed parameters. In NIST PQC library, because each specific parameter set requires its own source code directory, it is inevitable that there will be code duplication. Nonetheless this is not an issue as each parameter set will have its own unique algorithm name as the prefix.
 
-2. Removed unused files such as `Makefile`, `rng.c`, `rng.h` and any KAT generation files such as `PQCgenKAT.c`. Record any changes to the original source code in `NIST_PQC_README.md` file that lives in the same directory as the algorithm source code. Note that we can remove `rng.c` file because NIST PQC library provides a fallback implementation. However, it may not be possible to remove this file for all candidates and LEDAKEM is such an example. In the case of LEDAKEM, we exclude some random number generation functions from being compiled.
+2. Removed unused files such as `Makefile`, `rng.c`, `rng.h` and any KAT generation files such as `PQCgenKAT.c`. Record any changes to the original source code in `NIST_PQC_README.md` file that lives in the same directory as the algorithm source code. Note that we can remove `rng.c` file because NIST PQC library provides a fallback implementation. However, it may not be possible to remove this file for all candidates.
 
 3. The `Makefile` in NIST PQC library will enumerate and compile all the C source files of a candidate algorithm. However, this will not work if the algorithm implementers include a C source file from another source file. In this case, we will need to inspect the content of the original `Makefile` and enumerate the necessary source files that need to be compiled into a file named `SOURCES`.
 
