@@ -4,6 +4,7 @@
 # 'make test' to build the test suite
 # 'make android' to build static library for Android apps
 # 'make ios' to build static library for iOS apps
+# 'make mac' to build static library for Mac apps
 # 'sudo make install' to install everything you built.
 
 
@@ -12,7 +13,7 @@ default: native
 LIBNAME = nistpqc
 VERSION = 0.3
 ifeq ($(PREFIX),)
-	PREFIX := /usr/local
+  PREFIX := /usr/local
 endif
 DIRS = $(notdir $(wildcard crypto/*))
 export UNAME=$(shell uname -s)
@@ -61,8 +62,51 @@ export UNAME=Linux
 $(TOOLCHAIN):
 	$(ANDROID_SDK)/ndk-bundle/build/tools/make_standalone_toolchain.py --arch arm64 --api 26 --install-dir=$(TOOLCHAIN)
 
+# Mac
+else ifeq ($(findstring mac,$(MAKECMDGOALS)),mac)
+BUILDDIR:=build/mac
+XCODE_SDK:=macosx
+MACOS_MIN_SDK_VERSION=10.15
+TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
+export AR=$(TOOLCHAIN)/ar
+export AS=$(TOOLCHAIN)/as
+export CC=$(TOOLCHAIN)/clang
+export CXX=$(TOOLCHAIN)/clang++
+export LD=$(TOOLCHAIN)/ld
+export NM=$(TOOLCHAIN)/nm
+export OBJCOPY=objcopy
+export RANLIB=$(TOOLCHAIN)/ranlib
+export LIBTOOL=$(TOOLCHAIN)/libtool
+
+ifndef IOS_MIN_SDK_VERSION
+IOS_MIN_SDK_VERSION=13.0
+endif
+
+ifeq ($(MAKECMDGOALS),macos64_x86_64)
+export ARCHTYPE=osx
+export ARCH=x86_64
+CFLAGS+= -mmacosx-version-min=$(MACOS_MIN_SDK_VERSION)
+else ifeq ($(MAKECMDGOALS),macos64_arm64)
+export ARCHTYPE=osx
+export ARCH=arm64
+CFLAGS+= -mmacosx-version-min=$(MACOS_MIN_SDK_VERSION)
+else ifeq ($(MAKECMDGOALS),mac_catalyst_x86_64)
+export ARCHTYPE=catalyst
+export ARCH=x86_64
+CFLAGS+= -target arm64-apple-ios13.0-macabi -mios-version-min=13.0
+else ifeq ($(MAKECMDGOALS),mac_catalyst_arm64)
+export ARCHTYPE=catalyst
+export ARCH=arm64
+CFLAGS+= -target arm64-apple-ios13.0-macabi -mios-version-min=13.0
+endif
+CFLAGS+= -std=gnu99 -arch $(ARCH) -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) -fembed-bitcode
+BUILDDIR:=$(BUILDDIR)/$(ARCHTYPE)/$(ARCH)
+
 # iOS
 else ifeq ($(findstring ios,$(MAKECMDGOALS)),ios)
+ifndef IOS_MIN_SDK_VERSION
+IOS_MIN_SDK_VERSION=12.0
+endif
 BUILDDIR:=build/ios
 TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
 export AR=$(TOOLCHAIN)/ar
@@ -75,14 +119,88 @@ export OBJCOPY=objcopy
 export RANLIB=$(TOOLCHAIN)/ranlib
 export LIBTOOL=$(TOOLCHAIN)/libtool
 
-ifeq ($(MAKECMDGOALS),ios_arm64)
-export ARCH=arm64
-XCODE_SDK:=iphoneos
-else
+ifeq ($(MAKECMDGOALS),ios_sim_cross_x86_64)
 export ARCH=x86_64
 XCODE_SDK:=iphonesimulator
+CFLAGS+= -miphoneos-version-min=$(IOS_MIN_SDK_VERSION)
+else ifeq ($(MAKECMDGOALS),ios_sim_cross_arm64)
+export ARCH=arm64
+XCODE_SDK:=iphonesimulator
+CFLAGS+= -mios-version-min=$(IOS_MIN_SDK_VERSION)
+CFLAGS+= -target arm64-apple-ios13.0-macabi -mios-version-min=13.0
+else ifeq ($(MAKECMDGOALS),ios64_cross_arm64)
+export ARCH=arm64
+XCODE_SDK:=iphoneos
+CFLAGS+= -miphoneos-version-min=$(IOS_MIN_SDK_VERSION)
+else ifeq ($(MAKECMDGOALS),ios64_cross_arm64e)
+export ARCH=arm64e
+XCODE_SDK:=iphoneos
+CFLAGS+= -miphoneos-version-min=$(IOS_MIN_SDK_VERSION)
 endif
-CFLAGS+= -std=gnu99 -arch $(ARCH) -miphoneos-version-min=9.0 -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) 
+CFLAGS+= -std=gnu99 -arch $(ARCH) -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) -fembed-bitcode
+BUILDDIR:=$(BUILDDIR)/$(XCODE_SDK)/$(ARCH)
+
+# WatchOS
+else ifeq ($(findstring watchos,$(MAKECMDGOALS)),watchos)
+ifndef WATCHOS_MIN_SDK_VERSION
+WATCHOS_MIN_SDK_VERSION=4.0
+endif
+BUILDDIR:=build/watchos
+TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
+export AR=$(TOOLCHAIN)/ar
+export AS=$(TOOLCHAIN)/as
+export CC=$(TOOLCHAIN)/clang
+export CXX=$(TOOLCHAIN)/clang++
+export LD=$(TOOLCHAIN)/ld
+export NM=$(TOOLCHAIN)/nm
+export OBJCOPY=objcopy
+export RANLIB=$(TOOLCHAIN)/ranlib
+export LIBTOOL=$(TOOLCHAIN)/libtool
+
+ifeq ($(MAKECMDGOALS),watchos_sim_cross_x86_64)
+export ARCH=x86_64
+XCODE_SDK:=watchsimulator
+else ifeq ($(MAKECMDGOALS),watchos_sim_cross_i386)
+export ARCH=i386
+XCODE_SDK:=watchsimulator
+else ifeq ($(MAKECMDGOALS),watchos_cross_arm64_32)
+export ARCH=arm64_32
+XCODE_SDK:=watchos
+else ifeq ($(MAKECMDGOALS),watchos_cross_armv7k)
+export ARCH=armv7k
+XCODE_SDK:=watchos
+endif
+CFLAGS+= -std=gnu99 -arch $(ARCH) -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) -fembed-bitcode
+CFLAGS+= -mwatchos-version-min=$(WATCHOS_MIN_SDK_VERSION)
+BUILDDIR:=$(BUILDDIR)/$(ARCH)
+
+# TVOS
+else ifeq ($(findstring tvos,$(MAKECMDGOALS)),tvos)
+ifndef TVOS_MIN_SDK_VERSION
+TVOS_MIN_SDK_VERSION=12.0
+endif
+BUILDDIR:=build/tvos
+TOOLCHAIN:=$(shell xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/bin
+export AR=$(TOOLCHAIN)/ar
+export AS=$(TOOLCHAIN)/as
+export CC=$(TOOLCHAIN)/clang
+export CXX=$(TOOLCHAIN)/clang++
+export LD=$(TOOLCHAIN)/ld
+export NM=$(TOOLCHAIN)/nm
+export OBJCOPY=objcopy
+export RANLIB=$(TOOLCHAIN)/ranlib
+export LIBTOOL=$(TOOLCHAIN)/libtool
+
+ifeq ($(MAKECMDGOALS),tvos_sim_cross_x86_64)
+export ARCH=x86_64
+XCODE_SDK:=appletvsimulator
+CFLAGS+= -mtvos-version-min=$(TVOS_MIN_SDK_VERSION)
+else ifeq ($(MAKECMDGOALS),tvos64_cross_arm64)
+export ARCH=arm64
+XCODE_SDK:=appletvos
+CFLAGS+= -mtvos-version-min=$(TVOS_MIN_SDK_VERSION)
+endif
+CFLAGS+= -std=gnu99 -arch $(ARCH) -isysroot $(shell xcrun --sdk $(XCODE_SDK) --show-sdk-path) -fembed-bitcode
 BUILDDIR:=$(BUILDDIR)/$(ARCH)
 
 # Native builds
@@ -96,7 +214,9 @@ LIBTOOL=libtool
 endif
 
 ifeq ($(UNAME),Darwin)
-OPENSSLDIR=/usr/local/opt/openssl
+ifndef OPENSSLDIR
+OPENSSLDIR:=/usr/local/opt/openssl
+endif
 LDFLAGS += -dynamiclib -Wl,-undefined,dynamic_lookup
 LDFLAGS += -current_version $(VERSION) -compatibility_version $(VERSION)
 LDFLAGS += -install_name $(PREFIX)/lib/lib$(LIBNAME).dylib
@@ -104,6 +224,7 @@ SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).A.dylib
 SHAREDLIB_EXT:=dylib
 STATIC_INPUTS=$(filter %.a,$^) $(filter %.o,$^)
 TEST_LIBS = $(STATICLIB) -L$(PREFIX)/lib -lcrypto
+
 else ifeq ($(UNAME),Linux)
 LDFLAGS += -shared
 SHAREDLIB = $(BUILDDIR)/lib$(LIBNAME).so.$(VERSION)
@@ -115,7 +236,6 @@ else
 $(error Unsupported platform $(UNAME))
 endif
 
-
 ifneq ($(OPENSSLDIR),)
 CFLAGS += -I$(OPENSSLDIR)/include
 LDFLAGS += -L$(OPENSSLDIR)/lib
@@ -126,19 +246,88 @@ native : $(SHAREDLIB) $(STATICLIB)
 
 android: $(TOOLCHAIN) $(STATICLIB)
 
+mac:
+	$(MAKE) macos64_x86_64
+	$(MAKE) macos64_arm64
+	$(MAKE) mac_catalyst_x86_64
+	$(MAKE) mac_catalyst_arm64
+	lipo -create \
+		build/mac/osx/x86_64/libnistpqc.a \
+		build/mac/osx/arm64/libnistpqc.a \
+		-output build/mac/osx/libnistpqc.a
+	lipo -create \
+		build/mac/catalyst/x86_64/libnistpqc.a \
+		build/mac/catalyst/arm64/libnistpqc.a \
+		-output build/mac/catalyst/libnistpqc.a
+
+macos64_x86_64: $(STATICLIB)
+
+macos64_arm64: $(STATICLIB)
+
+mac_catalyst_x86_64: $(STATICLIB)
+
+mac_catalyst_arm64: $(STATICLIB)
+
 ios: 
-	echo lipo -create build/ios/arm64/libnistpqc.a build/ios/x86_64/libnistpqc.a -output build/ios/libnistpqc.a
+	$(MAKE) ios_sim_cross_arm64
+	$(MAKE) ios_sim_cross_x86_64
+	$(MAKE) ios64_cross_arm64
+	$(MAKE) ios64_cross_arm64e
+	lipo -create \
+		build/ios/iphonesimulator/arm64/libnistpqc.a \
+		build/ios/iphonesimulator/x86_64/libnistpqc.a \
+		-output build/ios/iphonesimulator/libnistpqc.a
+	lipo -create \
+		build/ios/iphoneos/arm64/libnistpqc.a \
+		build/ios/iphoneos/arm64e/libnistpqc.a \
+		-output build/ios/iphoneos/libnistpqc.a
 
-ios_arm64: $(STATICLIB)
+ios_sim_cross_arm64: $(STATICLIB)
 
-ios_x86_64: $(STATICLIB)
+ios_sim_cross_x86_64: $(STATICLIB)
+
+ios64_cross_arm64: $(STATICLIB)
+
+ios64_cross_arm64e: $(STATICLIB)
+
+watchos:
+	$(MAKE) watchos_cross_armv7k
+	$(MAKE) watchos_cross_arm64_32
+	$(MAKE) watchos_sim_cross_x86_64
+	$(MAKE) watchos_sim_cross_i386
+	lipo -create \
+		build/watchos/armv7k/libnistpqc.a \
+		build/watchos/arm64_32/libnistpqc.a \
+		build/watchos/x86_64/libnistpqc.a \
+		build/watchos/i386/libnistpqc.a \
+		-output build/watchos/libnistpqc.a
+
+watchos_cross_armv7k: $(STATICLIB)
+
+watchos_cross_arm64_32: $(STATICLIB)
+
+watchos_sim_cross_x86_64: $(STATICLIB)
+
+watchos_sim_cross_i386: $(STATICLIB)
+
+tvos:
+	$(MAKE) tvos_sim_cross_x86_64
+	$(MAKE) tvos64_cross_arm64
+	lipo -create \
+		build/tvos/arm64/libnistpqc.a \
+		build/tvos/x86_64/libnistpqc.a \
+		-output build/tvos/libnistpqc.a
+
+tvos_sim_cross_x86_64: $(STATICLIB)
+
+tvos64_cross_arm64: $(STATICLIB)
 
 # Shared library (libnistpqc.dylib or libnistpqc.so)
 $(SHAREDLIB) : $(ARCHIVES) $(OBJECTS)
 ifeq ($(UNAME),Darwin)
-	$(CC) $(LDFLAGS) $(STATIC_INPUTS) -o $@ -L$(PREFIX)/lib -lcrypto
+	$(CC) $(LDFLAGS) $(STATIC_INPUTS) -o $@ -L$(PREFIX)/lib
 else ifeq ($(UNAME),Linux)
-	$(CC) $(LDFLAGS) $(STATIC_INPUTS) -Wl,-soname,$(SONAME) -o $@ -lcrypto
+	$(CC) $(LDFLAGS) $(STATIC_INPUTS) -Wl,-soname,$(SONAME) -o $@
 else
 	@echo "Unsupported platform $(UNAME)"
 	@exit -1
